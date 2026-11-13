@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Heather Games</title>
+<style>
+  :root{--gold:#ffc400;--cream:#fff3dc;--muted:#d9b98a;--card:#33170f;--line:#f5c518}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{font-family:Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--cream);background:#1d0b07}
+  #home{min-height:100%;background:linear-gradient(180deg,#3a140d 0%,#1d0b07 45%,#120605 100%) fixed;overflow-y:auto}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 24px 56px}
+  header{text-align:center;padding:8px 0}
+  h1{margin:0;font-size:clamp(38px,10vw,58px);font-weight:800;letter-spacing:-.5px}
+  h1 span{color:var(--gold)}
+  .sub{color:var(--muted);font-size:clamp(16px,4.2vw,21px);margin:10px auto 0;max-width:520px;line-height:1.35}
+  .bar{width:170px;height:8px;border-radius:8px;margin:24px auto 0;background:linear-gradient(90deg,#d62828,#f4a000,#ffd60a)}
+  h2{color:var(--gold);letter-spacing:5px;font-size:16px;margin:36px 0 14px}
+  .grid{display:grid;gap:22px}
+  @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .art-wrap{position:relative}
+  .art{height:180px;display:flex;align-items:center;justify-content:center;font-size:80px;
+    background:repeating-linear-gradient(135deg,rgba(255,255,255,.06) 0 2px,transparent 2px 22px),var(--bg)}
+  .art svg{width:130px;height:130px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+  .new{position:absolute;top:12px;right:12px;background:var(--gold);color:#2a1405;font-weight:800;font-size:12px;padding:4px 10px;border-radius:99px;letter-spacing:1px}
+  .body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:12px;flex:1}
+  .body h3{margin:0;font-size:28px}
+  .body p{margin:0;color:var(--muted);line-height:1.5;font-size:17px}
+  .tags{display:flex;gap:8px;flex-wrap:wrap}
+  .tags i{font-style:normal;font-size:14px;padding:6px 14px;border-radius:99px;border:1px solid #7a4a25;background:#3d1c10;color:var(--cream)}
+  .play{margin-top:auto;display:block;text-align:center;text-decoration:none;color:#2a1405;font-weight:800;font-size:20px;
+    padding:16px;border-radius:16px;background:linear-gradient(#ffe27a,#f3ab1f);box-shadow:0 5px 0 #9a6410}
+  .play:active{transform:translateY(3px);box-shadow:0 2px 0 #9a6410}
+  .soon{border:1.5px dashed #6b3a1c;background:#241008;box-shadow:none}
+  .soon .art{--bg:#241008;opacity:.75}
+  .soon h3{color:#c9b8a5}
+  footer{text-align:center;color:#8c6a4a;font-size:13px;margin-top:44px}
+
+  /* game viewer */
+  #viewer{display:none;position:fixed;inset:0;flex-direction:column;background:#1d0d07}
+  #topbar{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 12px 10px;background:linear-gradient(#3a140d,#2a0f09);border-bottom:1px solid #5b3519}
+  #topbar h4{margin:0;flex:1;font-size:22px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb{font:inherit;font-size:16px;color:var(--cream);background:#2c120b;border:1px solid #7a4a25;border-radius:12px;padding:11px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .tb:active{background:#4a2113}
+  #frame{flex:1;width:100%;border:0;background:#1d0d07}
+</style>
+</head>
+<body>
+
+<div id="home">
+  <div class="wrap">
+    <header>
+      <h1>Heather <span>Games</span></h1>
+      <p class="sub">Little browser games, big memories. Free to play, no install.</p>
+      <div class="bar"></div>
+    </header>
+    <h2>ALL GAMES</h2>
+    <div class="grid" id="grid"></div>
+    <footer>© Heather Games</footer>
+  </div>
+</div>
+
+<div id="viewer">
+  <div id="topbar">
+    <button class="tb" id="back">← Back</button>
+    <h4 id="vtitle"></h4>
+    <button class="tb" id="full">Full screen</button>
+    <a class="tb" id="newtab" target="_blank" rel="noopener">New tab</a>
+  </div>
+  <iframe id="frame" title="Game" allow="fullscreen; autoplay" allowfullscreen></iframe>
+</div>
+
+<script>
+/* ============ ADD A NEW GAME: copy a block, paste it at the TOP of the list ============
+   id     : short name used in the address (heathergame.com/#/id)
+   src    : the game file in this folder (e.g. "mygame.html") or a full web address
+   art    : "emoji" or "svg:chopsticks"      bg : banner colour
+*/
+const GAMES = [
+  {
+    id: "racing",
+    title: "Heather GP",
+    art: "🏎️",
+    bg: "linear-gradient(135deg,#2a7be0,#0b2a66)",
+    desc: "Race 3 laps, dodge the traffic and beat your best time. Works on phone and computer.",
+    tags: ["Racing", "Skill", "1 player"],
+    src: "https://race.heathergame.com/",
+    isNew: true
+  },
+  {
+    id: "banh-dua",
+    title: "Banh Đũa",
+    art: "svg:chopsticks",
+    bg: "linear-gradient(135deg,#e03a2e,#7a1008)",
+    desc: "The classic Vietnamese pick-up sticks game. Toss the ball, grab your sticks, catch it, and don’t touch the rest!",
+    tags: ["Skill", "Vietnamese", "1–2 players"],
+    src: "banh-dua.html"
+  }
+];
+
+const CHOPSTICKS = '<svg viewBox="0 0 120 120"><g stroke-linecap="round"><line x1="22" y1="96" x2="82" y2="22" stroke="#d1102f" stroke-width="7"/><line x1="82" y1="22" x2="92" y2="10" stroke="#4a4f55" stroke-width="7"/><line x1="40" y1="106" x2="102" y2="40" stroke="#d1102f" stroke-width="7"/><line x1="102" y1="40" x2="112" y2="29" stroke="#4a4f55" stroke-width="7"/></g></svg>';
+
+const $ = id => document.getElementById(id);
+const grid = $('grid');
+
+GAMES.forEach(g => {
+  const c = document.createElement('div'); c.className = 'card';
+  const art = g.art.startsWith('svg:') ? CHOPSTICKS : g.art;
+  c.innerHTML = '<div class="art-wrap"><div class="art" style="--bg:' + g.bg + '">' + art + '</div>' +
+    (g.isNew ? '<span class="new">NEW</span>' : '') + '</div>' +
+    '<div class="body"><h3></h3><p></p><div class="tags"></div><a class="play">Play now</a></div>';
+  c.querySelector('h3').textContent = g.title;
+  c.querySelector('p').textContent = g.desc;
+  g.tags.forEach(t => { const i = document.createElement('i'); i.textContent = t; c.querySelector('.tags').appendChild(i); });
+  c.querySelector('.play').href = '#/' + g.id;
+  grid.appendChild(c);
+});
+const soon = document.createElement('div'); soon.className = 'card soon';
+soon.innerHTML = '<div class="art">✨</div><div class="body"><h3>More coming soon</h3><p>New games are on the way. Check back later!</p></div>';
+grid.appendChild(soon);
+
+const home = $('home'), viewer = $('viewer'), frame = $('frame');
+let shown = null;
+function route() {
+  const id = location.hash.replace(/^#\/?/, '');
+  const g = GAMES.find(x => x.id === id);
+  if (g) {
+    home.style.display = 'none'; viewer.style.display = 'flex';
+    $('vtitle').textContent = g.title;
+    $('newtab').href = g.src;
+    if (shown !== g.id) { frame.src = g.src; shown = g.id; }
+    document.title = g.title + ' – Heather Games';
+  } else {
+    viewer.style.display = 'none'; home.style.display = 'block';
+    if (shown) { frame.src = 'about:blank'; shown = null; }
+    document.title = 'Heather Games';
+  }
+}
+addEventListener('hashchange', route);
+$('back').addEventListener('click', () => { location.hash = '#/'; });
+$('full').addEventListener('click', () => {
+  const el = frame;
+  try { (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } catch (e) {}
+});
+route();
+</script>
+</body>
+</html>
