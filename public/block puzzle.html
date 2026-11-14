@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tessera</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  html, body { margin: 0; }
+  /* Layout: one centered column. Header with score, an 8x8 board, and a tray of three pieces to drag onto it. */
+  :root {
+    --bg: #eceef4;
+    --panel: #dde1ec;
+    --empty: #cdd3e3;
+    --fg: #1b2033;
+    --muted: #596280;
+    --accent: #3b5bdb;
+    --accent-fg: #ffffff;
+    --c0: #ef5b5b;
+    --c1: #f5a524;
+    --c2: #7ac943;
+    --c3: #19b5a5;
+    --c4: #3d8bfd;
+    --c5: #8b6cf0;
+    --c6: #e75fa7;
+    --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --s: 44px;
+    --t: 24px;
+    --g: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141826;
+      --panel: #1d2338;
+      --empty: #283050;
+      --fg: #e9ecf6;
+      --muted: #96a0c0;
+      --accent: #7b96ff;
+      --accent-fg: #101426;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141826;
+    --panel: #1d2338;
+    --empty: #283050;
+    --fg: #e9ecf6;
+    --muted: #96a0c0;
+    --accent: #7b96ff;
+    --accent-fg: #101426;
+    color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .app { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+  header {
+    width: calc(8 * var(--s) + 7 * var(--g) + 16px);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    line-height: 1;
+  }
+  .scores { display: flex; gap: 18px; text-align: right; }
+  .stat .label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .stat .num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat.best .num { color: var(--muted); }
+
+  .boardwrap { position: relative; }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--s));
+    grid-template-rows: repeat(8, var(--s));
+    gap: var(--g);
+    padding: 8px;
+    background: var(--panel);
+    border-radius: 16px;
+    touch-action: none;
+  }
+  .c {
+    width: var(--s);
+    height: var(--s);
+    border-radius: 7px;
+    background: var(--empty);
+  }
+  .b {
+    background: var(--col);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.3);
+    border-radius: 7px;
+  }
+  .c.pv { opacity: 0.55; }
+  .c.hl { box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.3), 0 0 0 2px var(--fg); position: relative; z-index: 1; }
+  .c.clr { animation: pop 0.3s ease-in forwards; }
+  @keyframes pop {
+    0% { transform: scale(1); filter: brightness(1); }
+    40% { transform: scale(1.12); filter: brightness(1.35); }
+    100% { transform: scale(0.2); opacity: 0; }
+  }
+
+  #tray {
+    width: calc(8 * var(--s) + 7 * var(--g) + 16px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot {
+    height: calc(5 * var(--t) + 4 * var(--g) + 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    border-radius: 12px;
+    cursor: grab;
+  }
+  .slot:hover { background: color-mix(in srgb, var(--panel) 60%, transparent); }
+  .slot.lifted > .piece { opacity: 0.2; }
+  .slot.empty { cursor: default; }
+  .piece { display: grid; gap: var(--g); }
+  .piece .sp { visibility: hidden; }
+  .ghost { position: fixed; z-index: 50; pointer-events: none; display: grid; gap: var(--g); filter: drop-shadow(0 8px 10px rgba(0,0,0,0.3)); }
+
+  .over {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    z-index: 5;
+  }
+  .over h2 { font-family: var(--font-display); font-size: 30px; margin: 0; }
+  .over p { margin: 0; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .over .big { font-family: var(--font-display); font-weight: 700; font-size: 44px; color: var(--fg); line-height: 1.1; }
+  button {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    cursor: pointer;
+  }
+  .over button { margin-top: 12px; }
+  button.ghostbtn { background: transparent; color: var(--muted); padding: 6px 10px; font-weight: 500; font-size: 13px; }
+  button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translate(-50%, 0);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 30px;
+    text-align: center;
+    pointer-events: none;
+    z-index: 6;
+    text-shadow: 0 2px 0 var(--bg), 0 0 14px var(--bg);
+    animation: rise 1s ease-out forwards;
+    white-space: nowrap;
+  }
+  .toast small { display: block; font-size: 15px; color: var(--accent); }
+  @keyframes rise {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
+    15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -34px) scale(1); }
+  }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; margin: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .c.clr { animation-duration: 0.01s; }
+    .toast { animation-duration: 0.01s; animation-delay: 0.8s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Tessera</h1>
+    <div class="scores">
+      <div class="stat"><div class="label">Score</div><div class="num" id="score">0</div></div>
+      <div class="stat best"><div class="label">Best</div><div class="num" id="best">0</div></div>
+    </div>
+  </header>
+  <div class="boardwrap">
+    <div id="board" role="application" aria-label="Game board, 8 by 8"></div>
+    <div class="over" id="over" hidden>
+      <h2>No moves left</h2>
+      <div class="big" id="finalScore">0</div>
+      <p id="finalNote"></p>
+      <button id="again" type="button">Play again</button>
+    </div>
+  </div>
+  <div id="tray"></div>
+  <p class="hint">Drag a piece onto the board. Fill a whole row or column to clear it.</p>
+  <button class="ghostbtn" id="restart" type="button">New game</button>
+</div>
+
+<script>
+(function () {
+  var N = 8;
+  var BASE = [
+    [[1]],
+    [[1,1]], [[1,1,1]], [[1,1,1,1]], [[1,1,1,1,1]],
+    [[1,1],[1,1]], [[1,1,1],[1,1,1],[1,1,1]], [[1,1,1],[1,1,1]],
+    [[1,0],[1,1]],
+    [[1,0,0],[1,0,0],[1,1,1]],
+    [[1,1,1],[0,1,0]],
+    [[0,1,1],[1,1,0]], [[1,1,0],[0,1,1]],
+    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]]
+  ];
+
+  function rotate(m) {
+    var h = m.length, w = m[0].length, out = [];
+    for (var c = 0; c < w; c++) {
+      var row = [];
+      for (var r = h - 1; r >= 0; r--) row.push(m[r][c]);
+      out.push(row);
+    }
+    return out;
+  }
+  var SHAPES = (function () {
+    var seen = {}, list = [];
+    BASE.forEach(function (b) {
+      var m = b;
+      for (var i = 0; i < 4; i++) {
+        var key = JSON.stringify(m);
+        if (!seen[key]) { seen[key] = 1; list.push(m); }
+        m = rotate(m);
+      }
+    });
+    return list;
+  })();
+
+  var root = document.documentElement;
+  var boardEl = document.getElementById('board');
+  var trayEl = document.getElementById('tray');
+  var overEl = document.getElementById('over');
+  var scoreEl = document.getElementById('score');
+  var bestEl = document.getElementById('best');
+  var wrapEl = boardEl.parentNode;
+
+  var grid, pieces, score, best = 0, combo, busy, over, drag = null;
+  var cells = [];
+  var S = 44, T = 24, G = 3, PAD = 8;
+
+  try { best = parseInt(localStorage.getItem('tessera-best'), 10) || 0; } catch (e) {}
+
+  for (var i = 0; i < N * N; i++) {
+    var d = document.createElement('div');
+    d.className = 'c';
+    boardEl.appendChild(d);
+    cells.push(d);
+  }
+
+  function newGrid() {
+    var g = [];
+    for (var r = 0; r < N; r++) { g.push([]); for (var c = 0; c < N; c++) g[r].push(-1); }
+    return g;
+  }
+  function colorVar(n) { return 'var(--c' + n + ')'; }
+
+  function fitsAt(g, shape, r, c) {
+    for (var i = 0; i < shape.length; i++) {
+      for (var j = 0; j < shape[i].length; j++) {
+        if (!shape[i][j]) continue;
+        var rr = r + i, cc = c + j;
+        if (rr < 0 || cc < 0 || rr >= N || cc >= N || g[rr][cc] !== -1) return false;
+      }
+    }
+    return true;
+  }
+  function fitsAnywhere(g, shape) {
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (fitsAt(g, shape, r, c)) return true;
+    return false;
+  }
+  function fullLines(g) {
+    var rows = [], cols = [], r, c;
+    for (r = 0; r < N; r++) {
+      var ok = true;
+      for (c = 0; c < N; c++) if (g[r][c] === -1) { ok = false; break; }
+      if (ok) rows.push(r);
+    }
+    for (c = 0; c < N; c++) {
+      var ok2 = true;
+      for (r = 0; r < N; r++) if (g[r][c] === -1) { ok2 = false; break; }
+      if (ok2) cols.push(c);
+    }
+    return { rows: rows, cols: cols };
+  }
+  function countCells(shape) {
+    var n = 0;
+    shape.forEach(function (row) { row.forEach(function (v) { n += v; }); });
+    return n;
+  }
+
+  function deal() {
+    var set, tries = 0;
+    do {
+      set = [];
+      for (var i = 0; i < 3; i++) {
+        set.push({
+          shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+          color: Math.floor(Math.random() * 7),
+          used: false
+        });
+      }
+      tries++;
+    } while (tries < 40 && !set.some(function (p) { return fitsAnywhere(grid, p.shape); }));
+    return set;
+  }
+
+  function sizes() {
+    var availW = Math.min(window.innerWidth - 32, 480) - 2 * PAD;
+    var sw = Math.floor((availW - 7 * G) / N);
+    var availH = window.innerHeight - 190;
+    var sh = Math.floor((availH - 16 - 7 * G - 24) / (N + 2.9));
+    S = Math.max(28, Math.min(sw, sh, 56));
+    T = Math.max(14, Math.floor(S * 0.54));
+    root.style.setProperty('--s', S + 'px');
+    root.style.setProperty('--t', T + 'px');
+    root.style.setProperty('--g', G + 'px');
+  }
+
+  function buildPiece(shape, color, size, cls) {
+    var el = document.createElement('div');
+    el.className = cls;
+    var w = shape[0].length;
+    el.style.gridTemplateColumns = 'repeat(' + w + ',' + size + 'px)';
+    el.style.gridAutoRows = size + 'px';
+    shape.forEach(function (row) {
+      row.forEach(function (v) {
+        var cell = document.createElement('div');
+        if (v) { cell.className = 'b'; cell.style.setProperty('--col', colorVar(color)); }
+        else cell.className = 'sp';
+        el.appendChild(cell);
+      });
+    });
+    return el;
+  }
+
+  function renderTray() {
+    trayEl.innerHTML = '';
+    pieces.forEach(function (p, i) {
+      var slot = document.createElement('div');
+      slot.className = 'slot' + (p.used ? ' empty' : '');
+      slot.dataset.i = i;
+      if (!p.used) {
+        slot.appendChild(buildPiece(p.shape, p.color, T, 'piece'));
+        slot.addEventListener('pointerdown', function (e) { startDrag(e, i, slot); });
+      }
+      trayEl.appendChild(slot);
+    });
+  }
+
+  function renderBoard(pv) {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var el = cells[r * N + c];
+        var v = grid[r][c];
+        var cls = 'c';
+        if (v !== -1) { cls += ' b'; el.style.setProperty('--col', colorVar(v)); }
+        if (pv) {
+          var key = r + ',' + c;
+          if (pv.cells[key]) { cls += ' b pv'; el.style.setProperty('--col', colorVar(pv.color)); }
+          if (pv.hl[key]) cls += ' hl';
+        }
+        el.className = cls;
+      }
+    }
+  }
+
+  function setScore(v) {
+    score = v;
+    scoreEl.textContent = v;
+    if (v > best) {
+      best = v;
+      try { localStorage.setItem('tessera-best', String(best)); } catch (e) {}
+    }
+    bestEl.textContent = best;
+  }
+
+  function toast(main, sub) {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = main + (sub ? '<small>' + sub + '</small>' : '');
+    wrapEl.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 1050);
+  }
+
+  function startGame() {
+    grid = newGrid();
+    combo = 0; busy = false; over = false;
+    overEl.hidden = true;
+    pieces = deal();
+    setScore(0);
+    renderBoard();
+    renderTray();
+  }
+
+  /* dragging */
+  function ghostOrigin(e) {
+    var shape = pieces[drag.i].shape;
+    var gw = shape[0].length * S + (shape[0].length - 1) * G;
+    var gh = shape.length * S + (shape.length - 1) * G;
+    var lift = e.pointerType === 'mouse' ? 0 : 70;
+    return { x: e.clientX - gw / 2, y: e.clientY - gh / 2 - lift };
+  }
+  function startDrag(e, i, slot) {
+    if (busy || over || pieces[i].used) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    var p = pieces[i];
+    var ghost = buildPiece(p.shape, p.color, S, 'ghost');
+    document.body.appendChild(ghost);
+    drag = { i: i, slot: slot, ghost: ghost, target: null };
+    slot.classList.add('lifted');
+    moveDrag(e);
+  }
+  function moveDrag(e) {
+    if (!drag) return;
+    var o = ghostOrigin(e);
+    drag.ghost.style.left = o.x + 'px';
+    drag.ghost.style.top = o.y + 'px';
+    var rect = boardEl.getBoundingClientRect();
+    var col = Math.round((o.x - rect.left - PAD) / (S + G));
+    var row = Math.round((o.y - rect.top - PAD) / (S + G));
+    var p = pieces[drag.i];
+    if (fitsAt(grid, p.shape, row, col)) {
+      if (!drag.target || drag.target.r !== row || drag.target.c !== col) {
+        drag.target = { r: row, c: col };
+        showPreview(p, row, col);
+      }
+    } else if (drag.target) {
+      drag.target = null;
+      renderBoard();
+    }
+  }
+  function showPreview(p, row, col) {
+    var test = grid.map(function (r) { return r.slice(); });
+    var pvCells = {};
+    p.shape.forEach(function (rowArr, i) {
+      rowArr.forEach(function (v, j) {
+        if (v) { test[row + i][col + j] = p.color; pvCells[(row + i) + ',' + (col + j)] = 1; }
+      });
+    });
+    var lines = fullLines(test), hl = {};
+    lines.rows.forEach(function (r) { for (var c = 0; c < N; c++) hl[r + ',' + c] = 1; });
+    lines.cols.forEach(function (c) { for (var r = 0; r < N; r++) hl[r + ',' + c] = 1; });
+    renderBoard({ cells: pvCells, color: p.color, hl: hl });
+  }
+  function endDrag(cancel) {
+    if (!drag) return;
+    var d = drag;
+    drag = null;
+    document.body.removeChild(d.ghost);
+    d.slot.classList.remove('lifted');
+    if (!cancel && d.target) place(d.i, d.target.r, d.target.c);
+    else renderBoard();
+  }
+
+  function place(i, row, col) {
+    var p = pieces[i];
+    p.shape.forEach(function (rowArr, a) {
+      rowArr.forEach(function (v, b) { if (v) grid[row + a][col + b] = p.color; });
+    });
+    p.used = true;
+    var gained = countCells(p.shape);
+    var lines = fullLines(grid);
+    var n = lines.rows.length + lines.cols.length;
+    renderBoard();
+    renderTray();
+
+    if (n > 0) {
+      combo += 1;
+      gained += n * n * 10 + (combo - 1) * 15;
+      var kill = {};
+      lines.rows.forEach(function (r) { for (var c = 0; c < N; c++) kill[r * N + c] = 1; });
+      lines.cols.forEach(function (c) { for (var r = 0; r < N; r++) kill[r * N + c] = 1; });
+      busy = true;
+      Object.keys(kill).forEach(function (k) { cells[k].classList.add('clr'); });
+      setTimeout(function () {
+        Object.keys(kill).forEach(function (k) { grid[Math.floor(k / N)][k % N] = -1; });
+        var empty = grid.every(function (r) { return r.every(function (v) { return v === -1; }); });
+        if (empty) gained += 100;
+        setScore(score + gained);
+        var label = n > 1 ? n + ' lines' : 'Clear';
+        toast('+' + gained, empty ? 'Board cleared' : (combo > 1 ? label + ' · combo ×' + combo : label));
+        busy = false;
+        renderBoard();
+        afterMove();
+      }, 320);
+    } else {
+      combo = 0;
+      setScore(score + gained);
+      afterMove();
+    }
+  }
+
+  function afterMove() {
+    if (pieces.every(function (p) { return p.used; })) {
+      pieces = deal();
+      renderTray();
+    }
+    var playable = pieces.some(function (p) { return !p.used && fitsAnywhere(grid, p.shape); });
+    if (!playable) {
+      over = true;
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('finalNote').textContent = score >= best && score > 0 ? 'New best score' : 'Best: ' + best;
+      overEl.hidden = false;
+    }
+  }
+
+  window.addEventListener('pointermove', moveDrag);
+  window.addEventListener('pointerup', function () { endDrag(false); });
+  window.addEventListener('pointercancel', function () { endDrag(true); });
+  window.addEventListener('resize', function () { sizes(); if (pieces) renderTray(); });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('restart').addEventListener('click', startGame);
+
+  sizes();
+  bestEl.textContent = best;
+  startGame();
+
+  window.__tessera = { fitsAt: fitsAt, fullLines: fullLines, newGrid: newGrid, SHAPES: SHAPES, rotate: rotate };
+})();
+</script>
+
+</body>
+</html>
