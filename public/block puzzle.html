@@ -187,6 +187,7 @@
   }
   .over button { margin-top: 12px; }
   button.ghostbtn { background: transparent; color: var(--muted); padding: 6px 10px; font-weight: 500; font-size: 13px; }
+  .row { display: flex; gap: 4px; align-items: center; justify-content: center; }
   button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
   .toast {
@@ -239,7 +240,10 @@
   </div>
   <div id="tray"></div>
   <p class="hint">Drag a piece onto the board. Fill a whole row or column to clear it.</p>
-  <button class="ghostbtn" id="restart" type="button">New game</button>
+  <div class="row">
+    <button class="ghostbtn" id="restart" type="button">New game</button>
+    <button class="ghostbtn" id="mute" type="button">Sound on</button>
+  </div>
 </div>
 
 <script>
@@ -298,6 +302,50 @@
     boardEl.appendChild(d);
     cells.push(d);
   }
+
+
+  /* sound: small synthesized effects, no audio files. Starts after the first touch. */
+  var audio = { ctx: null, on: true };
+  try { if (localStorage.getItem('tessera-sound') === 'off') audio.on = false; } catch (e) {}
+  function ac() {
+    if (!audio.on) return null;
+    if (!audio.ctx) {
+      var C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return null;
+      try { audio.ctx = new C(); } catch (e) { return null; }
+    }
+    if (audio.ctx.state === 'suspended') { try { audio.ctx.resume(); } catch (e) {} }
+    return audio.ctx;
+  }
+  function tone(freq, start, dur, type, vol, slideTo) {
+    var c = ac();
+    if (!c) return;
+    var t0 = c.currentTime + start;
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g);
+    g.connect(c.destination);
+    o.start(t0);
+    o.stop(t0 + dur + 0.03);
+  }
+  var sfx = {
+    pick: function () { tone(520, 0, 0.08, 'sine', 0.12, 800); },
+    place: function () { tone(160, 0, 0.17, 'sine', 0.38, 70); tone(900, 0, 0.04, 'triangle', 0.08); },
+    clear: function (n, combo) {
+      var notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568];
+      var count = Math.min(6, 3 + n);
+      var shift = Math.pow(1.0595, Math.min(Math.max(combo - 1, 0), 8));
+      for (var i = 0; i < count; i++) tone(notes[i] * shift, 0.08 + i * 0.065, 0.55, 'sine', 0.17);
+    },
+    over: function () {
+      [392, 330, 262, 196].forEach(function (f, i) { tone(f, i * 0.18, 0.42, 'triangle', 0.2); });
+    }
+  };
 
   function newGrid() {
     var g = [];
@@ -461,6 +509,7 @@
     document.body.appendChild(ghost);
     drag = { i: i, slot: slot, ghost: ghost, target: null };
     slot.classList.add('lifted');
+    sfx.pick();
     moveDrag(e);
   }
   function moveDrag(e) {
@@ -514,11 +563,13 @@
     var gained = countCells(p.shape);
     var lines = fullLines(grid);
     var n = lines.rows.length + lines.cols.length;
+    sfx.place();
     renderBoard();
     renderTray();
 
     if (n > 0) {
       combo += 1;
+      sfx.clear(n, combo);
       gained += n * n * 10 + (combo - 1) * 15;
       var kill = {};
       lines.rows.forEach(function (r) { for (var c = 0; c < N; c++) kill[r * N + c] = 1; });
@@ -551,6 +602,7 @@
     var playable = pieces.some(function (p) { return !p.used && fitsAnywhere(grid, p.shape); });
     if (!playable) {
       over = true;
+      sfx.over();
       document.getElementById('finalScore').textContent = score;
       document.getElementById('finalNote').textContent = score >= best && score > 0 ? 'New best score' : 'Best: ' + best;
       overEl.hidden = false;
@@ -564,11 +616,20 @@
   document.getElementById('again').addEventListener('click', startGame);
   document.getElementById('restart').addEventListener('click', startGame);
 
+  var muteBtn = document.getElementById('mute');
+  function syncMute() { muteBtn.textContent = audio.on ? 'Sound on' : 'Sound off'; }
+  muteBtn.addEventListener('click', function () {
+    audio.on = !audio.on;
+    try { localStorage.setItem('tessera-sound', audio.on ? 'on' : 'off'); } catch (e) {}
+    syncMute();
+    if (audio.on) sfx.pick();
+  });
+  syncMute();
+
   sizes();
   bestEl.textContent = best;
   startGame();
 
-  window.__tessera = { fitsAt: fitsAt, fullLines: fullLines, newGrid: newGrid, SHAPES: SHAPES, rotate: rotate };
 })();
 </script>
 
