@@ -73,12 +73,21 @@
 </div>
 
 <script>
-/* ============ ADD A NEW GAME: copy a block, paste it at the TOP of the list ============
+/* ============ ADD A NEW GAME: bloc puzzle.html, paste it at the TOP of the list ============
    id     : short name used in the address (heathergame.com/#/id)
    src    : the game file in this folder (e.g. "mygame.html") or a full web address
    art    : "emoji" or "svg:chopsticks"      bg : banner colour
 */
-const GAMES = [
+const GAMES = [  {
+    id: "block-puzzle",
+    title: "Block Puzzle",
+    file: "block puzzle.html",
+    badge: "NEW",
+    desc: "A fun block puzzle game. Works on phone and computer.",
+    tags: ["Puzzle", "1 player"],
+    bg: "linear-gradient(135deg,#2a7be0,#0b2a66)"
+  },
+
   {
     id: "racing",
     title: "Heather GP",
