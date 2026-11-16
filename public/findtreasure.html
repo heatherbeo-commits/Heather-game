@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Lost Treasure</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5172482638038047" crossorigin="anonymous"></script>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1b140c;font-family:Georgia,'Times New Roman',serif;touch-action:none;user-select:none;-webkit-user-select:none;color:#fff}
+canvas{display:block}
+#t{position:fixed;inset:0}
+.h{position:fixed;pointer-events:none}
+#bars{left:12px;top:calc(12px + env(safe-area-inset-top,0px));width:140px}
+.b{height:9px;background:#0007;border-radius:5px;margin-bottom:5px;overflow:hidden;border:1px solid #fff4}.b i{display:block;height:100%;width:100%}
+#top{left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));text-align:center;text-shadow:0 2px 6px #000}
+#top b{font-size:20px;color:#ffd36a}#biome{font-size:13px;opacity:.85}
+#side{right:12px;top:calc(12px + env(safe-area-inset-top,0px));text-align:center}
+#mm{width:100px;height:100px;border:2px solid #e8c36a;border-radius:50%;background:#000a}
+#cmp{width:44px;height:44px;margin:6px auto 0;border:2px solid #e8c36a;border-radius:50%;background:#000a;position:relative}
+#arr{position:absolute;left:50%;top:3px;width:0;height:0;margin-left:-6px;border:6px solid transparent;border-bottom:16px solid #ffd36a;transform-origin:50% 19px}
+#msg{left:0;right:0;top:30%;text-align:center;font-size:18px;text-shadow:0 2px 8px #000;opacity:0;transition:opacity .4s;padding:0 20px}
+.btn{position:fixed;width:64px;height:64px;border-radius:50%;background:#0008;border:2px solid #e8c36a;display:flex;align-items:center;justify-content:center;font-size:26px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#jb{right:24px}#ab{right:100px}#mb{left:12px;top:calc(72px + env(safe-area-inset-top,0px));bottom:auto;width:42px;height:42px;font-size:18px}#gb{right:62px;bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+#joy{position:fixed;left:30px;bottom:calc(30px + env(safe-area-inset-bottom,0px));width:100px;height:100px;border-radius:50%;border:2px solid #fff5;background:#0003;pointer-events:none}
+#knob{position:absolute;left:30px;top:30px;width:40px;height:40px;border-radius:50%;background:#ffd36acc}
+.ov{position:fixed;inset:0;background:radial-gradient(#3b2a14ee,#0c0804f5);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box;gap:12px}
+.ov h1{font-size:38px;margin:0;color:#ffd36a;letter-spacing:1px}.ov p{max-width:380px;line-height:1.5;margin:0;opacity:.9}
+.ov button{font:inherit;font-size:20px;padding:12px 34px;border-radius:30px;border:2px solid #ffd36a;background:#7a4a14;color:#fff}
+</style></head><body>
+<div id="t"></div>
+<div class="h" id="bars"><div class="b"><i id="hp" style="background:#e04b4b"></i></div><div class="b"><i id="fd" style="background:#e8923a"></i></div><div class="b"><i id="wt" style="background:#4aa8e8"></i></div></div>
+<div class="h" id="top"><b id="pc">Map pieces 0/4</b><div id="biome"></div><div id="ammo" style="font-size:13px;color:#ffd36a"></div><div id="lv" style="font-size:15px;color:#ff7a7a"></div></div>
+<div class="h" id="side"><canvas id="mm" width="200" height="200"></canvas><div id="cmp"><div id="arr"></div></div></div>
+<div class="h" id="msg"></div>
+<div id="joy"><div id="knob"></div></div>
+<div class="btn" id="gb">🔫</div><div class="btn" id="mb">📺</div><div class="btn" id="ab">⚔</div><div class="btn" id="jb">⤒</div>
+<div class="ov" id="adv" style="display:none;background:#000"><h1 style="font-size:24px">Sponsored video (demo)</h1><p id="adt"></p></div>
+<div class="ov" id="ads" style="display:none"><h1 id="at"></h1><p id="ap"></p><button id="a1">Watch 1 ad: +1 bullet</button><button id="a3">Watch 3 ads: +1 life</button><button id="ac">Close</button></div>
+<div class="ov" id="ov"><h1>The Lost Treasure</h1><p>Find the 4 pieces of the ancient map hidden in the jungle, desert, snow mountains and volcanic island. Put them together to unlock the treasure in the lost city.</p><p style="font-size:14px;opacity:.7">Left side of the screen: move. Right side: rotate the camera. 🔫 shoots where you face (find yellow ammo boxes), ⚔ is a melee strike, ⤒ jumps. On PC: WASD, Space, G to shoot, F to strike.</p><button id="go">Start the expedition</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id),R=Math.random,C=(h)=>new THREE.Color(h);
+const sm=(a,b,x)=>{x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)};
+const COL=[C(0x2f6b2a),C(0xdaa95b),C(0xeef3f7),C(0x3a2b28)],FOG=[C(0x8fc4a0),C(0xe8c98f),C(0xcfdfec),C(0x5a3024)];
+const NAMES=['Tropical Jungle','Desert','Snow Mountains','Volcanic Island'];
+function W(x,z){let r=[Math.max(0,z),Math.max(0,x),Math.max(0,-z),Math.max(0,-x)].map(v=>(v+6)**2),s=r[0]+r[1]+r[2]+r[3];return r.map(v=>v/s)}
+const POOLS=[[-140,0,9],[-95,35,7],[-100,-40,7],[-75,-5,6]];
+function Hb(x,z){const w=W(x,z),r=Math.hypot(x,z);
+ const n=Math.sin(x*.05)*Math.cos(z*.045)*3+Math.sin(x*.13+z*.09)*1.2+Math.sin(z*.021+1)*Math.cos(x*.027)*4;
+ const dune=Math.sin(x*.07+z*.03)*3.5+Math.sin(x*.15)*1;
+ const mt=Math.abs(Math.sin(x*.035)*Math.cos(z*.03+1))*20+Math.abs(Math.sin(z*.06+x*.02))*5;
+ const d2=(x+140)**2+z*z;
+ let h=w[0]*n*1.2+w[1]*dune+w[2]*mt+w[3]*n*.8+30*Math.exp(-d2/2500)-14*Math.exp(-d2/120);
+ return h*sm(20,50,r)}
+POOLS.forEach(p=>p[3]=Hb(p[0],p[1])-2.5);
+function H(x,z){let h=Hb(x,z);for(const p of POOLS){const d=Math.hypot(x-p[0],z-p[1]);if(d<p[2]+6)h+=(p[3]-h)*(1-sm(p[2],p[2]+6,d))}return h}
+// scene
+const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.shadowMap.enabled=true;$('t').appendChild(ren.domElement);
+const sc=new THREE.Scene();sc.background=FOG[0].clone();sc.fog=new THREE.Fog(FOG[0].clone(),30,200);
+const cam=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.3,400);
+sc.add(new THREE.HemisphereLight(0xfff2d0,0x4a5a3a,.85));
+const sun=new THREE.DirectionalLight(0xfff0c8,.9);sun.position.set(40,70,30);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);const sc2=sun.shadow.camera;sc2.left=sc2.bottom=-35;sc2.right=sc2.top=35;sc2.far=200;sc.add(sun,sun.target);
+// terrain
+const SEG=160,g=new THREE.PlaneGeometry(400,400,SEG,SEG);g.rotateX(-Math.PI/2);
+const pos=g.attributes.position,cols=[];
+for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),h=H(x,z);pos.setY(i,h);const w=W(x,z);const c=new THREE.Color(0,0,0);for(let k=0;k<4;k++)c.add(COL[k].clone().multiplyScalar(w[k]));
+ const st=1-sm(25,48,Math.hypot(x,z));c.lerp(C(0x8c8a78),st*.8);
+ if(w[2]>.4)c.lerp(C(0xffffff),sm(2,9,h)*.6);if(w[3]>.4)c.lerp(C(0x7a3a1c),Math.exp(-((x+140)**2+z*z)/2500)*.6);
+ c.multiplyScalar(.85+R()*.25);cols.push(c.r,c.g,c.b)}
+g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));g.computeVertexNormals();
+const ter=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));ter.receiveShadow=true;sc.add(ter);
+// lava
+const lavaM=new THREE.MeshBasicMaterial({color:0xff5a14});
+POOLS.forEach(p=>{const m=new THREE.Mesh(new THREE.CircleGeometry(p[2]+.5,24),lavaM);m.rotation.x=-Math.PI/2;m.position.set(p[0],p[3]+.3,p[1]);sc.add(m);const l=new THREE.PointLight(0xff6a20,1.2,30);l.position.set(p[0],p[3]+3,p[1]);sc.add(l)});
+// vegetation
+const T={},mat=c=>new THREE.MeshLambertMaterial({color:c,flatShading:true});
+const GE={trunk:[new THREE.CylinderGeometry(.25,.4,1,6).translate(0,.5,0),mat(0x6b4a2a)],can:[new THREE.IcosahedronGeometry(1,0),mat(0x2d8a35)],pine:[new THREE.ConeGeometry(1,1,7).translate(0,.5,0),mat(0x2f5d50)],cac:[new THREE.CylinderGeometry(.4,.5,1,7).translate(0,.5,0),mat(0x4a8a3a)],rock:[new THREE.DodecahedronGeometry(1,0),mat(0x7a7468)],crk:[new THREE.DodecahedronGeometry(1,0),mat(0x2a1d1b)]};
+const add=(k,x,y,z,sx,sy,sz)=>{(T[k]=T[k]||[]).push([x,y,z,sx,sy,sz,R()*6])};
+for(let i=0;i<2600;i++){const x=(R()-.5)*390,z=(R()-.5)*390,r=Math.hypot(x,z);if(r<30||(Math.abs(x)<4&&z>100&&z<118))continue;
+ if(POOLS.some(p=>Math.hypot(x-p[0],z-p[1])<p[2]+3))continue;const w=W(x,z),b=w.indexOf(Math.max(...w)),h=H(x,z);
+ if(b==0&&R()<.4){const s=5+R()*4;add('trunk',x,h,z,1,s,1);add('can',x,h+s,z,2.6,1.1,2.6)}
+ else if(b==1){if(R()<.1)add('cac',x,h,z,1,2+R()*2,1);else if(R()<.05)add('rock',x,h+.3,z,1+R()*1.5,1+R(),1+R()*1.5)}
+ else if(b==2&&R()<.25){const s=5+R()*5;add('pine',x,h,z,2+s*.1,s,2+s*.1)}
+ else if(b==3&&R()<.2)add('crk',x,h+.3,z,1+R()*2,1+R()*2.5,1+R()*2)}
+const D=new THREE.Object3D();
+for(const k in T){const a=T[k],m=new THREE.InstancedMesh(GE[k][0],GE[k][1],a.length);a.forEach((v,i)=>{D.position.set(v[0],v[1],v[2]);D.scale.set(v[3],v[4],v[5]);D.rotation.y=v[6];D.updateMatrix();m.setMatrixAt(i,D.matrix)});m.castShadow=k=='pine'||k=='trunk';sc.add(m)}
+// ruins
+const stone=mat(0x9a9684);const plat=new THREE.Mesh(new THREE.CylinderGeometry(7,8,.8,16),stone);plat.position.y=.2;plat.receiveShadow=true;sc.add(plat);
+for(let i=0;i<8;i++){const a=i/8*6.283,p=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.1,7,8),stone);p.position.set(Math.cos(a)*14,3.3,Math.sin(a)*14);p.rotation.z=(R()-.5)*.1;p.castShadow=true;sc.add(p)}
+const chest=new THREE.Group();const cb=new THREE.Mesh(new THREE.BoxGeometry(2,1.2,1.3),mat(0x6b3d14));cb.position.y=.6;const cl=new THREE.Mesh(new THREE.BoxGeometry(2.1,.5,1.4),mat(0xe8b830));cl.position.y=1.35;chest.add(cb,cl);chest.position.set(0,.6,0);chest.visible=false;sc.add(chest);
+const beamM=new THREE.MeshBasicMaterial({color:0xffd36a,transparent:true,opacity:.35,depthWrite:false});
+const beam=(x,z)=>{const b=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,60,8),beamM);b.position.set(x,H(x,z)+30,z);sc.add(b);return b};
+const chestBeam=beam(0,0);chestBeam.visible=false;
+// map pieces
+const PP=[[-30,95],[115,20],[25,-115],[-118,10]].map(p=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,2.2),new THREE.MeshBasicMaterial({color:0xffe08a,side:2}));m.position.set(p[0],H(p[0],p[1])+2,p[1]);sc.add(m);return{x:p[0],z:p[1],m,b:beam(p[0],p[1]),got:false}});
+// pickups
+const PK=[];const pkc=[0x4aa8e8,0xe8923a,0x4ae86a,0xffd23a];
+for(let i=0;i<80;i++){let x,z;do{x=(R()-.5)*380;z=(R()-.5)*380}while(Math.hypot(x,z)<18||POOLS.some(p=>Math.hypot(x-p[0],z-p[1])<p[2]+4));const t=i%4,m=new THREE.Mesh(new THREE.OctahedronGeometry(.5),new THREE.MeshBasicMaterial({color:pkc[t]}));m.position.set(x,H(x,z)+1,z);sc.add(m);PK.push({m,t,y:m.position.y})}
+// player
+const pl=new THREE.Group(),body=new THREE.Mesh(new THREE.CylinderGeometry(.4,.45,1.1,8),mat(0x2e5d8a));body.position.y=1.1;const hd=new THREE.Mesh(new THREE.SphereGeometry(.3,10,8),mat(0xe0b08a));hd.position.y=1.9;const hat=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.08,12),mat(0x6b4a2a));hat.position.y=2.12;const bp=new THREE.Mesh(new THREE.BoxGeometry(.6,.8,.35),mat(0x5a7a3a));bp.position.set(0,1.2,-.42);
+const lg=new THREE.Mesh(new THREE.BoxGeometry(.6,.6,.3),mat(0x4a3a2a));lg.position.y=.3;const gun=new THREE.Mesh(new THREE.BoxGeometry(.12,.15,.9),mat(0x222222));gun.position.set(.4,1.3,.5);pl.add(body,hd,hat,bp,lg,gun);pl.traverse(o=>o.castShadow=true);sc.add(pl);
+// animals
+const AC=[0xd9822b,0xc9a063,0xf2f2f2,0x5a1a14],AN=[];
+for(let b=0;b<4;b++)for(let i=0;i<5;i++){let x,z;do{const a=[1.571,0,-1.571,3.1416][b]+(R()-.5)*1.2,r=55+R()*120;x=Math.cos(a)*r;z=Math.sin(a)*r}while(Math.hypot(x,z-110)<35||POOLS.some(p=>Math.hypot(x-p[0],z-p[1])<p[2]+5));
+ const g=new THREE.Group(),m=mat(AC[b]),bd=new THREE.Mesh(new THREE.BoxGeometry(1.2,1,2.4),m);bd.position.y=1;const h=new THREE.Mesh(new THREE.BoxGeometry(.9,.8,.9),m);h.position.set(0,1.3,1.5);const e=new THREE.Mesh(new THREE.BoxGeometry(.7,.1,.1),new THREE.MeshBasicMaterial({color:0xff2020}));e.position.set(0,1.45,1.96);g.add(bd,h,e);g.scale.setScalar(1.2);g.position.set(x,H(x,z),z);g.traverse(o=>o.castShadow=true);sc.add(g);AN.push({g,hp:3,cd:0,x,z})}
+// more beasts
+const bx=(w,h,l,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,l),mat(c));m.position.set(x,y,z);return m};
+const legs=(c,w,h,l)=>[[-w,l],[w,l],[-w,-l],[w,-l]].map(p=>bx(.22,h,.22,c,p[0],h/2,p[1]));
+function mkA(k){const g=new THREE.Group();let s;
+ if(k=='spider'){g.add(bx(.9,.7,1.1,0x2a1633,0,.8,0),bx(.6,.5,.5,0x1a0d22,0,.8,.8),bx(.15,.15,.15,0xff2020,.15,.95,1.08),bx(.15,.15,.15,0xff2020,-.15,.95,1.08));for(let i=0;i<8;i++){const sd=i<4?1:-1,z=(i%4-1.5)*.45;g.add(bx(1.4,.1,.1,0x1a0d22,sd*.9,.55,z));g.add(bx(.1,.55,.1,0x1a0d22,sd*1.55,.28,z))}g.scale.setScalar(1.5);s={hp:2,sp:6.5,rng:24,dmg:6,ar:2.3,po:5,cdt:.9,msg:'Venomous spider bite! You are poisoned.'}}
+ else if(k=='snake'){for(let i=0;i<6;i++)g.add(bx(.35,.3,.7,i%2?0x3a7a2a:0x2a5a1a,Math.sin(i)*.3,.2,-i*.6));g.add(bx(.45,.35,.6,0x4a8a2a,0,.25,.6),bx(.1,.1,.1,0xffe030,.15,.38,.85),bx(.1,.1,.1,0xffe030,-.15,.38,.85));s={hp:2,sp:4.2,rng:16,dmg:8,ar:2.3,po:6,cdt:1.2,msg:'Snake bite! You are poisoned.'}}
+ else if(k=='croc'){g.add(bx(1.6,.8,4,0x3f5a2a,0,.6,-.5),bx(1.1,.5,1.8,0x4a6a30,0,.6,2),bx(1,.1,1.6,0xeeeeee,0,.33,2.1),bx(.8,.5,2.5,0x3a5226,0,.45,-3.2),bx(.15,.15,.15,0xff2020,.35,.95,1.6),bx(.15,.15,.15,0xff2020,-.35,.95,1.6),...legs(0x33481f,.8,.4,1.2));s={hp:8,sp:3.8,rng:20,dmg:30,ar:3.6,cdt:1.4,msg:'Crocodile bite!'}}
+ else if(k=='scorpion'){g.add(bx(1,.5,1.6,0xa8441c,0,.5,0),bx(.4,.3,.9,0xc05a2a,.8,.5,1.1),bx(.4,.3,.9,0xc05a2a,-.8,.5,1.1),bx(.3,.3,1.4,0xa8441c,0,.9,-1.2),bx(.3,.9,.3,0xa8441c,0,1.4,-1.7),bx(.2,.2,.5,0x222222,0,1.9,-1.4));g.scale.setScalar(1.4);s={hp:3,sp:5.5,rng:22,dmg:8,ar:2.4,po:6,cdt:1,msg:'Scorpion sting! You are poisoned.'}}
+ else if(k=='wolf'){g.add(bx(.8,.8,1.8,0x8a8a92,0,.9,0),bx(.6,.6,.7,0x9a9aa2,0,1.1,1.1),bx(.2,.2,.9,0x8a8a92,0,1,-1.2),bx(.12,.12,.12,0xffe030,.2,1.25,1.46),bx(.12,.12,.12,0xffe030,-.2,1.25,1.46),...legs(0x77777f,.3,.6,.6));s={hp:3,sp:6.8,rng:32,dmg:10,ar:2.4,cdt:.8,msg:'Wolf attack!'}}
+ else{g.add(bx(1.6,1.4,2.4,0x5a3a22,0,1.2,0),bx(1,.9,1,0x6a4426,0,1.7,1.5),...legs(0x4a2e1a,.6,.8,.8));g.scale.setScalar(1.3);s={hp:8,sp:4.5,rng:22,dmg:25,ar:3,cdt:1.3,msg:'The bear mauls you!'}}
+ return{g,s}}
+const SA={j:1.571,d:0,s:-1.571};
+function spawn(bi,kind,n){for(let i=0;i<n;i++){let x,z;do{const a=SA[bi]+(R()-.5)*1.2,r=55+R()*120;x=Math.cos(a)*r;z=Math.sin(a)*r}while(Math.hypot(x,z-110)<35);const o=mkA(kind),g=o.g;g.position.set(x,H(x,z),z);g.traverse(q=>q.castShadow=true);sc.add(g);AN.push(Object.assign({g,cd:0,x,z},o.s))}}
+spawn('j','spider',6);spawn('j','snake',5);spawn('j','croc',4);spawn('d','snake',4);spawn('d','scorpion',6);spawn('s','wolf',6);spawn('s','bear',3);
+// state
+let P={x:0,z:110,y:H(0,110),vy:0,face:0},S={hp:100,fd:100,wt:100},yaw=Math.PI,pit=.35,mv={x:0,y:0},keys={},got=0,jump=false,atk=0,play=false,won=false,t0=0,seen={},curB=0;
+const msg=(t)=>{const e=$('msg');e.textContent=t;e.style.opacity=1;clearTimeout(msg.t);msg.t=setTimeout(()=>e.style.opacity=0,2600)};
+function respawn(){poison=0;P.x=0;P.z=110;P.y=H(0,110);S.hp=70;S.fd=Math.max(S.fd,60);S.wt=Math.max(S.wt,60)}
+// input
+let lives=5,adCount=0,gameOver=false,poison=0;
+function runAd(done){const v=$('adv');v.style.display='flex';let s=5;const upd=()=>$('adt').textContent='Ad playing... '+s+'s';upd();const iv=setInterval(()=>{s--;if(s<=0){clearInterval(iv);v.style.display='none';done()}else upd()},1000)}
+function openAds(over){gameOver=over;play=false;mv.x=mv.y=0;$('ads').style.display='flex';$('at').textContent=over?'Out of lives':'Ad rewards';$('ap').textContent=over?'Watch 3 ads to get 1 life and keep going.':'Lives '+lives+'/5. Ammo '+ammo+'.';$('a3').textContent='Watch 3 ads: +1 life ('+adCount+'/3)';$('a3').style.display=lives>=5?'none':'';$('ac').textContent=over?'Restart game':'Close'}
+function closeAds(){$('ads').style.display='none';play=true}
+$('mb').onclick=()=>{if(play&&!won)openAds(false)};
+$('a1').onclick=()=>{$('ads').style.display='none';runAd(()=>{ammo++;msg('+1 bullet');gameOver?openAds(true):closeAds()})};
+$('a3').onclick=()=>{$('ads').style.display='none';runAd(()=>{adCount++;if(adCount>=3){adCount=0;lives=Math.min(5,lives+1);msg('+1 life!');if(gameOver){gameOver=false;respawn()}closeAds()}else openAds(gameOver)})};
+$('ac').onclick=()=>{if(gameOver)location.reload();else closeAds()};
+const ptr={};let jo=null;const tl=$('t');
+tl.addEventListener('pointerdown',e=>{if(!play)return;tl.setPointerCapture(e.pointerId);if(e.pointerType!='mouse'&&e.clientX<innerWidth/2){ptr[e.pointerId]='j';jo=[e.clientX,e.clientY]}else ptr[e.pointerId]=[e.clientX,e.clientY]});
+tl.addEventListener('pointermove',e=>{const p=ptr[e.pointerId];if(!p)return;if(p=='j'){let dx=e.clientX-jo[0],dy=e.clientY-jo[1],l=Math.hypot(dx,dy),k=Math.min(1,l/45);if(l>0){mv.x=dx/l*k;mv.y=dy/l*k}$('knob').style.transform=`translate(${mv.x*30}px,${mv.y*30}px)`}else{yaw-=(e.clientX-p[0])*.006;pit=Math.max(.05,Math.min(1.1,pit+(e.clientY-p[1])*.005));p[0]=e.clientX;p[1]=e.clientY}});
+const up=e=>{if(ptr[e.pointerId]=='j'){mv.x=mv.y=0;$('knob').style.transform=''}delete ptr[e.pointerId]};tl.addEventListener('pointerup',up);tl.addEventListener('pointercancel',up);
+let shoot=false,ammo=24;$('gb').onpointerdown=()=>shoot=true;$('jb').onpointerdown=()=>jump=true;$('ab').onpointerdown=()=>atk=.01;
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code=='Space')jump=true;if(e.code=='KeyF')atk=.01;if(e.code=='KeyG')shoot=true});addEventListener('keyup',e=>keys[e.code]=0);
+$('go').onclick=()=>{$('ov').style.display='none';play=true;t0=performance.now();msg('Find the first map piece. The compass shows the way.')};
+addEventListener('resize',()=>{ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+const mmc=$('mm').getContext('2d');
+function drawMM(){const c=mmc;c.clearRect(0,0,200,200);c.save();c.beginPath();c.arc(100,100,100,0,7);c.clip();const q=['#2f6b2a','#daa95b','#eef3f7','#3a2b28'];
+ c.fillStyle=q[2];c.fillRect(0,0,200,70);c.fillStyle=q[0];c.fillRect(0,130,200,70);c.fillStyle=q[3];c.fillRect(0,70,70,60);c.fillStyle=q[1];c.fillRect(130,70,70,60);c.fillStyle='#8c8a78';c.fillRect(70,70,60,60);
+ const m=(x,z)=>[100+x/2,100+z/2];c.fillStyle='#ffd36a';PP.forEach(p=>{if(!p.got){const a=m(p.x,p.z);c.beginPath();c.arc(a[0],a[1],5,0,7);c.fill()}});
+ if(got==4){c.fillStyle='#f0f';c.beginPath();c.arc(100,100,6,0,7);c.fill()}
+ const a=m(P.x,P.z);c.translate(a[0],a[1]);c.rotate(-P.face);c.fillStyle='#f33';c.beginPath();c.moveTo(0,-8);c.lineTo(6,6);c.lineTo(-6,6);c.fill();c.restore()}
+// loop
+let last=performance.now();
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;const tm=now/1000;
+ if(play&&!won){
+  const w=W(P.x,P.z),b=w.indexOf(Math.max(...w)),r=Math.hypot(P.x,P.z),inC=r<35;
+  let ix=mv.x+(keys.KeyD?1:0)-(keys.KeyA?1:0),iy=mv.y+(keys.KeyS?1:0)-(keys.KeyW?1:0);const il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}
+  const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  const dx=fx*-iy+rx*ix,dz=fz*-iy+rz*ix,sp=8*(b==3?.9:1);
+  P.x=Math.max(-195,Math.min(195,P.x+dx*sp*dt));P.z=Math.max(-195,Math.min(195,P.z+dz*sp*dt));
+  if(il>.1)P.face+=Math.atan2(Math.sin(Math.atan2(dx,dz)-P.face),Math.cos(Math.atan2(dx,dz)-P.face))*Math.min(1,dt*12);
+  const gh=H(P.x,P.z);P.vy-=26*dt;P.y+=P.vy*dt;if(P.y<=gh){P.y=gh;P.vy=0;if(jump)P.vy=9}jump=false;
+  // survival
+  let dr=1,fr=.5,cold=0;if(b==1&&!inC)dr=2.4;if(b==2&&!inC){fr=1.2;cold=1}
+  S.wt-=.7*dr*dt;S.fd-=fr*dt;S.wt=Math.max(0,S.wt);S.fd=Math.max(0,S.fd);
+  if(cold)S.hp-=.9*dt;if(poison>0){S.hp-=3*dt;poison-=dt}if(S.wt<=0||S.fd<=0)S.hp-=2.5*dt;else if(S.wt>50&&S.fd>50)S.hp=Math.min(100,S.hp+1.2*dt);
+  for(const p of POOLS)if(Math.hypot(P.x-p[0],P.z-p[1])<p[2]){S.hp-=40*dt;if(!seen.lv){seen.lv=1;msg('Lava! Stay away from the red pools.')}}
+  const bk=inC?4:b;if(bk!=curB){curB=bk;const wm=['Jungle: spiders, snakes and crocodiles lurk here.','Desert: scorpions and snakes, and thirst grows twice as fast.','Snow Mountains: wolves and bears, freezing cold, faster hunger.','Volcanic Island: avoid the lava pools.','Lost City: the treasure waits on the central stone platform.'];if(!seen[bk]){seen[bk]=1;msg(wm[bk])}$('biome').textContent=bk==4?'Lost City':NAMES[bk]}
+  // pickups
+  PK.forEach(k=>{if(!k.m.visible)return;k.m.rotation.y=tm*2;k.m.position.y=k.y+Math.sin(tm*3)*.15;if(Math.hypot(P.x-k.m.position.x,P.z-k.m.position.z)<1.8&&Math.abs(P.y-k.y)<3){k.m.visible=false;if(k.t==0)S.wt=Math.min(100,S.wt+40);else if(k.t==1)S.fd=Math.min(100,S.fd+35);else if(k.t==2)S.hp=Math.min(100,S.hp+35);else{ammo+=8;msg('+8 ammo')}}});
+  // pieces
+  PP.forEach(p=>{if(p.got)return;p.m.rotation.y=tm*2;p.m.position.y=H(p.x,p.z)+2+Math.sin(tm*2)*.3;if(Math.hypot(P.x-p.x,P.z-p.z)<3){p.got=true;p.m.visible=p.b.visible=false;got++;msg(got<4?`Found ${got}/4 map pieces!`:'The map is complete! The treasure lies at the center of the lost city.');if(got==4){chest.visible=chestBeam.visible=true}}});
+  if(got==4&&Math.hypot(P.x,P.z)<3.5){won=true;const s=Math.round((performance.now()-t0)/1000);$('ov').innerHTML=`<h1>Legendary Treasure!</h1><p>You crossed four dangerous lands and opened the golden chest in ${Math.floor(s/60)} min ${s%60} sec.</p><button onclick="location.reload()">Play again</button>`;$('ov').style.display='flex'}
+  // combat
+  const doAtk=atk>0;atk=0;
+  if(shoot){shoot=false;if(ammo>0){ammo--;let best=null,bd2=75;AN.forEach(a=>{if(a.hp<=0)return;const ex=a.x-P.x,ez=a.z-P.z,d=Math.hypot(ex,ez);if(d<bd2&&(ex*fx+ez*fz)/d>.97){bd2=d;best=a}});
+   const L=best?bd2:40,ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(P.x+fx*.8,P.y+1.3,P.z+fz*.8),new THREE.Vector3(P.x+fx*L,P.y+1.3,P.z+fz*L)]),new THREE.LineBasicMaterial({color:0xffe08a}));sc.add(ln);setTimeout(()=>sc.remove(ln),70);P.face=Math.atan2(fx,fz);
+   if(best){best.hp-=2;if(best.hp<=0){best.g.visible=false;S.fd=Math.min(100,S.fd+25);msg('Beast shot down! You gained some food.')}}}else msg('Out of ammo! Find ammo boxes or tap the TV button for a bullet.')}
+  AN.forEach(a=>{if(a.hp<=0)return;const ddx=P.x-a.x,ddz=P.z-a.z,d=Math.hypot(ddx,ddz);a.cd-=dt;
+   if(doAtk&&d<5){a.hp--;a.x-=ddx/d*3;a.z-=ddz/d*3;if(a.hp<=0){a.g.visible=false;S.fd=Math.min(100,S.fd+25);msg('Beast defeated! You gained some food.')}}
+   const A=a.sp||5.2,AR=a.rng||30,AD=a.dmg||14,AK=a.ar||2.6;if(d<AR&&a.hp>0){a.x+=ddx/d*A*dt;a.z+=ddz/d*A*dt;a.g.rotation.y=Math.atan2(ddx,ddz);if(d<AK&&a.cd<=0){S.hp-=AD;a.cd=a.cdt||1;if(a.po)poison=Math.max(poison,a.po);msg(a.msg||'A wild animal attacks!')}}
+   a.g.position.set(a.x,H(a.x,a.z),a.z)});
+  if(S.hp<=0){lives--;if(lives<=0){lives=0;openAds(true)}else{msg(`You have fallen. ${lives} lives left.`);respawn()}}
+  // target + compass
+  let tg=null,bd=1e9;if(got==4)tg={x:0,z:0};else PP.forEach(p=>{if(!p.got){const d=Math.hypot(p.x-P.x,p.z-P.z);if(d<bd){bd=d;tg=p}}});
+  if(tg){const tx=tg.x-P.x,tz=tg.z-P.z,rel=Math.atan2(tx*rx+tz*rz,tx*fx+tz*fz);$('arr').style.transform=`rotate(${rel}rad)`}
+  $('hp').style.width=S.hp+'%';$('fd').style.width=S.fd+'%';$('wt').style.width=S.wt+'%';$('pc').textContent=`Map pieces ${got}/4`;$('ammo').textContent='Ammo '+ammo+(poison>0?'   POISONED':'');$('lv').textContent='Lives '+'♥'.repeat(lives)+'♡'.repeat(5-lives);drawMM()}
+ pl.position.set(P.x,P.y,P.z);pl.rotation.y=P.face;lg.scale.y=1+(Math.hypot(mv.x,mv.y)>.1||keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD?Math.sin(tm*14)*.12:0);
+ const cd=9,cx=P.x+Math.sin(yaw)*Math.cos(pit)*cd,cz=P.z+Math.cos(yaw)*Math.cos(pit)*cd;cam.position.set(cx,Math.max(P.y+2+Math.sin(pit)*cd,H(cx,cz)+1.5),cz);cam.lookAt(P.x,P.y+1.6,P.z);
+ sun.position.set(P.x+40,70,P.z+30);sun.target.position.set(P.x,0,P.z);
+ const w=W(P.x,P.z),fc=new THREE.Color(0,0,0);for(let k=0;k<4;k++)fc.add(FOG[k].clone().multiplyScalar(w[k]));sc.fog.color.lerp(fc,.03);sc.background.copy(sc.fog.color);
+ ren.render(sc,cam)}
+requestAnimationFrame(frame);
+</script></body></html>
