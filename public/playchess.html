@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Heather Chess</title>
+<meta name="description" content="Play chess online: vs computer, puzzles, blitz arena, openings and Chess 960.">
+<style>
+/* Layout: one phone-width column (max 520px). Home = six mode cards; each mode is a full screen with a board and a bottom action row. */
+:root{
+  --bg:#e9edf2; --surface:#ffffff; --surface2:#dfe5ec; --fg:#141a22; --muted:#5a6675; --line:#c9d1db;
+  --accent:#b86e00; --accent-fg:#ffffff; --good:#1b8a5a; --bad:#c23b3b; --info:#2f6fd0;
+  --font-display:'Chakra Petch','Segoe UI',system-ui,sans-serif; --font-body:'Inter','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#18202a; --surface2:#222c39; --fg:#eef2f7; --muted:#97a3b3; --line:#2c3846;
+  --accent:#f2b134; --accent-fg:#1b1200; --good:#47c98d; --bad:#ef6b6b; --info:#6aa3ff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#18202a; --surface2:#222c39; --fg:#eef2f7; --muted:#97a3b3; --line:#2c3846;
+  --accent:#f2b134; --accent-fg:#1b1200; --good:#47c98d; --bad:#ef6b6b; --info:#6aa3ff; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-tap-highlight-color:transparent}
+.app{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.15;text-wrap:balance}
+h2{font-size:22px} h3{font-size:16px}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.sq:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+.muted{color:var(--muted)} .sm{font-size:13px}
+.row{display:flex;gap:10px;align-items:center} .wrap{flex-wrap:wrap} .grow{flex:1;min-width:0} .between{justify-content:space-between}
+.top{display:flex;align-items:center;gap:10px}
+.logo{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:.02em}
+.logo b{color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;font-weight:600;min-height:42px}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;min-height:34px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:default}
+.icon{width:42px;padding:0;display:grid;place-items:center;font-size:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-family:var(--font-display);font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;min-height:150px;overflow:hidden}
+.card .g{font-size:46px;line-height:1;color:var(--c);filter:drop-shadow(0 2px 0 rgba(0,0,0,.25));font-family:"Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols",serif}
+.card h3{font-size:16px}
+.card small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.tag{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--surface2);color:var(--muted)}
+.tag.free{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
+.tag.ads{background:color-mix(in srgb,var(--info) 20%,transparent);color:var(--info)}
+.tag.pass{background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--accent)}
+.ad{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;color:var(--muted);font-size:12.5px;background:transparent;width:100%;text-align:left}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+/* board */
+.board{--sq-l:#e8c99b;--sq-d:#a9743f;--pw:#fff;--pb:#1b1b1b;--po:#000;--hl:rgba(255,214,0,.45);--glow:none;
+  display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;width:100%;max-width:100%;border-radius:8px;overflow:hidden;border:2px solid var(--line);position:relative;user-select:none;touch-action:manipulation}
+.sq{all:unset;box-sizing:border-box;position:relative;display:grid;place-items:center;cursor:pointer;container-type:size}
+.sq.l{background:var(--sq-l)} .sq.d{background:var(--sq-d)}
+.sq .pc{font-family:"Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif;font-size:78cqh;line-height:1;pointer-events:none;transform:translateY(-4%)}
+.sq .pc.w{color:var(--pw);text-shadow:0 0 1px var(--po),0 0 1px var(--po),0 1px 2px var(--po),var(--glow)}
+.sq .pc.b{color:var(--pb);text-shadow:0 0 1px var(--pw),0 1px 1px rgba(0,0,0,.5),var(--glow)}
+.sq.last::before,.sq.sel::before,.sq.hint::before{content:"";position:absolute;inset:0;background:var(--hl)}
+.sq.sel::before{background:rgba(80,180,255,.5)} .sq.hint::before{background:rgba(70,220,130,.55)}
+.sq.chk::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,40,40,.85) 0,rgba(255,40,40,0) 70%)}
+.sq.dot i{position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(20,20,20,.35);z-index:2}
+.sq.cap i{position:absolute;inset:6%;border-radius:50%;border:5px solid rgba(20,20,20,.35);z-index:2}
+.sq.fl::before{content:attr(data-f);position:absolute;right:3px;bottom:1px;font-size:10px;font-weight:700;opacity:.6;color:var(--sq-d)}
+.sq.d.fl::before{color:var(--sq-l)}
+.sq.rk::after{content:attr(data-r);position:absolute;left:3px;top:1px;font-size:10px;font-weight:700;opacity:.6;color:var(--sq-d);z-index:3}
+.sq.d.rk::after{color:var(--sq-l)}
+.promo{position:absolute;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;gap:8px;z-index:5}
+.promo button{width:18%;aspect-ratio:1;border-radius:10px;border:0;background:var(--surface);color:var(--fg);font-size:34px;font-family:"Noto Sans Symbols 2","Segoe UI Symbol",serif}
+.pbar{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.pbar .nm{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clock{font-family:var(--font-display);font-size:20px;font-variant-numeric:tabular-nums;padding:2px 10px;border-radius:8px;background:var(--surface2)}
+.clock.on{background:var(--accent);color:var(--accent-fg)} .clock.low{background:var(--bad);color:#fff}
+.moves{display:flex;gap:8px;overflow-x:auto;padding:2px 0;font-size:13px;font-variant-numeric:tabular-nums;scrollbar-width:thin}
+.moves span{white-space:nowrap;color:var(--muted)} .moves b{color:var(--fg);font-weight:600}
+.status{min-height:22px;font-weight:600;text-align:center}
+.status.bad{color:var(--bad)} .status.good{color:var(--good)}
+.ctrl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ctrl .btn{padding:8px 4px;font-size:13px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:600;font-size:13.5px}
+.seg button.on{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.seg button[disabled]{opacity:.5}
+.dots{display:flex;gap:6px} .dots i{flex:1;height:6px;border-radius:3px;background:var(--surface2)} .dots i.done{background:var(--good)} .dots i.now{background:var(--accent)}
+.shake{animation:sh .35s}
+@keyframes sh{20%{transform:translateX(-6px)}60%{transform:translateX(6px)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+/* sheet */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0 max(0px,env(safe-area-inset-left,0px)) 0 max(0px,env(safe-area-inset-right,0px))}
+.sheet{width:100%;max-width:520px;background:var(--surface);border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;max-height:88%;overflow:auto}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.skin{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.skin.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);aspect-ratio:2/1;border-radius:6px;overflow:hidden}
+.mini div{display:grid;place-items:center;font-size:22px;font-family:"Noto Sans Symbols 2","Segoe UI Symbol",serif}
+table{border-collapse:collapse;width:100%;font-size:13.5px} td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tbl{overflow-x:auto}
+.bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden} .bar i{display:block;height:100%;background:var(--accent)}
+.rev{border-left:4px solid var(--bad);padding:6px 10px;background:var(--surface2);border-radius:0 8px 8px 0}
+.rev.m{border-color:var(--accent)} .rev.i{border-color:var(--info)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>html,body{margin:0}body{min-height:100vh}</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div id="layer"></div>
+
+<script id="engine">
+const Engine = (function () {
+'use strict';
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const PCH = { p: 1, n: 2, b: 3, r: 4, q: 5, k: 6 };
+const LET = ' PNBRQK';
+const KNJ = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+const KGJ = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const DIA = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const ORT = [[-1,0],[1,0],[0,-1],[0,1]];
+const INF = 1e6, MATE = 30000;
+const VAL = [0, 100, 320, 330, 500, 900, 20000];
+
+const PST = [null,
+[0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10, 5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5, 5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
+[-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40, -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30, -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30, -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
+[-20,-10,-10,-10,-10,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,10,10,5,0,-10, -10,5,5,10,10,5,5,-10, -10,0,10,10,10,10,0,-10, -10,10,10,10,10,10,10,-10, -10,5,0,0,0,0,5,-10, -20,-10,-10,-10,-10,-10,-10,-20],
+[0,0,0,0,0,0,0,0, 5,10,10,10,10,10,10,5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, 0,0,0,5,5,0,0,0],
+[-20,-10,-10,-5,-5,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,5,5,5,0,-10, -5,0,5,5,5,5,0,-5, 0,0,5,5,5,5,0,-5, -10,5,5,5,5,5,0,-10, -10,0,5,0,0,0,0,-10, -20,-10,-10,-5,-5,-10,-10,-20]
+];
+const KM = [-30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -20,-30,-30,-40,-40,-30,-30,-20, -10,-20,-20,-20,-20,-20,-20,-10, 20,20,0,0,0,0,20,20, 20,30,10,0,0,10,30,20];
+const KE = [-50,-40,-30,-20,-20,-30,-40,-50, -30,-20,-10,0,0,-10,-20,-30, -30,-10,20,30,30,20,-10,-30, -30,-10,30,40,40,30,-10,-30, -30,-10,30,40,40,30,-10,-30, -30,-10,20,30,30,20,-10,-30, -30,-30,0,0,0,0,-30,-30, -50,-30,-30,-30,-30,-30,-30,-50];
+
+function sqName(i) { return 'abcdefgh'[i & 7] + (8 - (i >> 3)); }
+function sqIdx(n) { return (8 - +n[1]) * 8 + (n.charCodeAt(0) - 97); }
+
+function fromFEN(fen) {
+  const p = fen.split(' ');
+  const b = new Int8Array(64);
+  let i = 0;
+  for (const ch of p[0]) {
+    if (ch === '/') continue;
+    if (ch >= '1' && ch <= '8') { i += +ch; continue; }
+    const lo = ch.toLowerCase();
+    b[i++] = (ch === lo ? -1 : 1) * PCH[lo];
+  }
+  const s = { b, t: p[1] === 'b' ? -1 : 1, c: 0, ep: -1, hm: +(p[4] || 0), fm: +(p[5] || 1), ks: [-1, -1], koth: false };
+  const cs = p[2] || '-';
+  if (cs.includes('K')) s.c |= 1;
+  if (cs.includes('Q')) s.c |= 2;
+  if (cs.includes('k')) s.c |= 4;
+  if (cs.includes('q')) s.c |= 8;
+  if (p[3] && p[3] !== '-') s.ep = sqIdx(p[3]);
+  for (i = 0; i < 64; i++) { if (b[i] === 6) s.ks[0] = i; if (b[i] === -6) s.ks[1] = i; }
+  s.rk = [0, 7]; s.kf = 4;
+  if (s.c) {
+    const hr = (s.c & 3) ? 7 : 0, kq = s.ks[hr === 7 ? 0 : 1];
+    if ((kq >> 3) === hr) {
+      s.kf = kq & 7;
+      const rv = hr === 7 ? 4 : -4; let lo = -1, hi = -1;
+      for (let x = 0; x < 8; x++) if (b[hr * 8 + x] === rv) { if (x < s.kf && lo < 0) lo = x; if (x > s.kf) hi = x; }
+      if (lo >= 0) s.rk[0] = lo; if (hi >= 0) s.rk[1] = hi;
+    }
+  }
+  return s;
+}
+function toFEN(s) {
+  let out = '';
+  for (let r = 0; r < 8; r++) {
+    let e = 0;
+    for (let f = 0; f < 8; f++) {
+      const v = s.b[r * 8 + f];
+      if (!v) { e++; continue; }
+      if (e) { out += e; e = 0; }
+      const ch = LET[Math.abs(v)];
+      out += v > 0 ? ch : ch.toLowerCase();
+    }
+    if (e) out += e;
+    if (r < 7) out += '/';
+  }
+  let cs = '';
+  if (s.c & 1) cs += 'K'; if (s.c & 2) cs += 'Q'; if (s.c & 4) cs += 'k'; if (s.c & 8) cs += 'q';
+  return out + ' ' + (s.t === 1 ? 'w' : 'b') + ' ' + (cs || '-') + ' ' + (s.ep >= 0 ? sqName(s.ep) : '-') + ' ' + s.hm + ' ' + s.fm;
+}
+function key(s) { return toFEN(s).split(' ').slice(0, 4).join(' '); }
+function clone(s) { return { b: Int8Array.from(s.b), t: s.t, c: s.c, ep: s.ep, hm: s.hm, fm: s.fm, ks: s.ks.slice(), koth: s.koth, rk: s.rk, kf: s.kf }; }
+
+function attacked(s, sq, by) {
+  const b = s.b, r = sq >> 3, f = sq & 7;
+  const pr = r + by;
+  if (pr >= 0 && pr < 8) {
+    if (f > 0 && b[pr * 8 + f - 1] === by) return true;
+    if (f < 7 && b[pr * 8 + f + 1] === by) return true;
+  }
+  for (let k = 0; k < 8; k++) {
+    let rr = r + KNJ[k][0], ff = f + KNJ[k][1];
+    if (rr >= 0 && rr < 8 && ff >= 0 && ff < 8 && b[rr * 8 + ff] === 2 * by) return true;
+    rr = r + KGJ[k][0]; ff = f + KGJ[k][1];
+    if (rr >= 0 && rr < 8 && ff >= 0 && ff < 8 && b[rr * 8 + ff] === 6 * by) return true;
+  }
+  for (let k = 0; k < 4; k++) {
+    let dr = DIA[k][0], df = DIA[k][1], rr = r + dr, ff = f + df;
+    while (rr >= 0 && rr < 8 && ff >= 0 && ff < 8) {
+      const v = b[rr * 8 + ff];
+      if (v) { if (v === 3 * by || v === 5 * by) return true; break; }
+      rr += dr; ff += df;
+    }
+    dr = ORT[k][0]; df = ORT[k][1]; rr = r + dr; ff = f + df;
+    while (rr >= 0 && rr < 8 && ff >= 0 && ff < 8) {
+      const v = b[rr * 8 + ff];
+      if (v) { if (v === 4 * by || v === 5 * by) return true; break; }
+      rr += dr; ff += df;
+    }
+  }
+  return false;
+}
+function inCheck(s) { return attacked(s, s.ks[s.t === 1 ? 0 : 1], -s.t); }
+
+function gen(s, caps) {
+  const b = s.b, t = s.t, out = [];
+  for (let i = 0; i < 64; i++) {
+    const pc = b[i];
+    if (!pc || (pc > 0) !== (t > 0)) continue;
+    const ty = pc * t, r = i >> 3, f = i & 7;
+    if (ty === 1) {
+      const dr = -t, nr = r + dr, startRow = t === 1 ? 6 : 1, promoRow = t === 1 ? 0 : 7;
+      if (nr < 0 || nr > 7) continue;
+      if (!b[nr * 8 + f]) {
+        if (nr === promoRow) { for (const pp of [5, 4, 3, 2]) out.push(i | ((nr * 8 + f) << 6) | (pp << 12)); }
+        else if (!caps) {
+          out.push(i | ((nr * 8 + f) << 6));
+          if (r === startRow && !b[(r + 2 * dr) * 8 + f]) out.push(i | (((r + 2 * dr) * 8 + f) << 6) | (4 << 16));
+        }
+      }
+      for (let df = -1; df <= 1; df += 2) {
+        const ff = f + df;
+        if (ff < 0 || ff > 7) continue;
+        const to = nr * 8 + ff, v = b[to];
+        if (v && (v > 0) !== (t > 0)) {
+          if (nr === promoRow) { for (const pp of [5, 4, 3, 2]) out.push(i | (to << 6) | (pp << 12) | (8 << 16)); }
+          else out.push(i | (to << 6) | (8 << 16));
+        } else if (!v && to === s.ep) out.push(i | (to << 6) | (9 << 16));
+      }
+    } else if (ty === 2 || ty === 6) {
+      const J = ty === 2 ? KNJ : KGJ;
+      for (let k = 0; k < 8; k++) {
+        const rr = r + J[k][0], ff = f + J[k][1];
+        if (rr < 0 || rr > 7 || ff < 0 || ff > 7) continue;
+        const to = rr * 8 + ff, v = b[to];
+        if (!v) { if (!caps) out.push(i | (to << 6)); }
+        else if ((v > 0) !== (t > 0)) out.push(i | (to << 6) | (8 << 16));
+      }
+      if (ty === 6 && !caps && s.c) {
+        const home = t === 1 ? 7 : 0;
+        if ((i >> 3) === home && f === s.kf) {
+          for (let side = 0; side < 2; side++) {
+            if (!(s.c & (t === 1 ? (side ? 1 : 2) : (side ? 4 : 8)))) continue;
+            const rf = s.rk[side], rsq = home * 8 + rf;
+            if (b[rsq] !== 4 * t) continue;
+            const kt = side ? 6 : 2, rt = side ? 5 : 3;
+            let ok = true;
+            const lo = Math.min(f, kt, rf, rt), hi = Math.max(f, kt, rf, rt);
+            for (let x = lo; x <= hi; x++) { const q = home * 8 + x; if (q !== i && q !== rsq && b[q]) { ok = false; break; } }
+            if (!ok) continue;
+            for (let x = Math.min(f, kt); x <= Math.max(f, kt); x++) if (attacked(s, home * 8 + x, -t)) { ok = false; break; }
+            if (ok) out.push(i | (rsq << 6) | (2 << 16));
+          }
+        }
+      }
+    } else {
+      for (let k = 0; k < 8; k++) {
+        const diag = k < 4;
+        if (ty === 3 && !diag) continue;
+        if (ty === 4 && diag) continue;
+        const d = diag ? DIA[k] : ORT[k - 4];
+        let rr = r + d[0], ff = f + d[1];
+        while (rr >= 0 && rr < 8 && ff >= 0 && ff < 8) {
+          const to = rr * 8 + ff, v = b[to];
+          if (!v) { if (!caps) out.push(i | (to << 6)); }
+          else { if ((v > 0) !== (t > 0)) out.push(i | (to << 6) | (8 << 16)); break; }
+          rr += d[0]; ff += d[1];
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function make(s, m) {
+  const from = m & 63, to = (m >> 6) & 63, promo = (m >> 12) & 7, fl = m >> 16, b = s.b, pc = b[from], col = pc > 0 ? 1 : -1;
+  if (fl & 2) {
+    const home = from >> 3, kt = home * 8 + (to > from ? 6 : 2), rt = home * 8 + (to > from ? 5 : 3), rk = b[to];
+    const cu = { m, cap: 0, capsq: to, c: s.c, ep: s.ep, hm: s.hm, k0: s.ks[0], k1: s.ks[1] };
+    b[from] = 0; b[to] = 0; b[kt] = pc; b[rt] = rk;
+    if (col === 1) { s.ks[0] = kt; s.c &= ~3; } else { s.ks[1] = kt; s.c &= ~12; }
+    s.ep = -1; s.hm++; if (col === -1) s.fm++; s.t = -s.t;
+    return cu;
+  }
+  const u = { m, cap: b[to], capsq: to, c: s.c, ep: s.ep, hm: s.hm, k0: s.ks[0], k1: s.ks[1] };
+  b[from] = 0; b[to] = pc;
+  if (fl & 1) { const cs = to + (col === 1 ? 8 : -8); u.cap = b[cs]; u.capsq = cs; b[cs] = 0; }
+  if (promo) b[to] = col * promo;
+  if (fl & 2) {
+    if (to === 62) { b[61] = b[63]; b[63] = 0; } else if (to === 58) { b[59] = b[56]; b[56] = 0; }
+    else if (to === 6) { b[5] = b[7]; b[7] = 0; } else if (to === 2) { b[3] = b[0]; b[0] = 0; }
+  }
+  if (pc === 6) s.ks[0] = to; else if (pc === -6) s.ks[1] = to;
+  let c = s.c;
+  if (pc === 6) c &= ~3; else if (pc === -6) c &= ~12;
+  const w0 = 56 + s.rk[0], w1 = 56 + s.rk[1], b0 = s.rk[0], b1 = s.rk[1];
+  if (from === w1 || to === w1) c &= ~1;
+  if (from === w0 || to === w0) c &= ~2;
+  if (from === b1 || to === b1) c &= ~4;
+  if (from === b0 || to === b0) c &= ~8;
+  s.c = c;
+  s.ep = (fl & 4) ? ((from + to) >> 1) : -1;
+  s.hm = (pc === 1 || pc === -1 || u.cap) ? 0 : s.hm + 1;
+  if (col === -1) s.fm++;
+  s.t = -s.t;
+  return u;
+}
+function unmake(s, u) {
+  const m = u.m, from = m & 63, to = (m >> 6) & 63, promo = (m >> 12) & 7, fl = m >> 16, b = s.b;
+  if (fl & 2) {
+    s.t = -s.t;
+    const cc = s.t;
+    if (cc === -1) s.fm--;
+    const home = from >> 3, kt = home * 8 + (to > from ? 6 : 2), rt = home * 8 + (to > from ? 5 : 3), rk = b[rt];
+    b[kt] = 0; b[rt] = 0; b[from] = cc * 6; b[to] = rk;
+    s.c = u.c; s.ep = u.ep; s.hm = u.hm; s.ks[0] = u.k0; s.ks[1] = u.k1;
+    return;
+  }
+  s.t = -s.t;
+  const col = s.t;
+  if (col === -1) s.fm--;
+  b[from] = promo ? col : b[to];
+  b[to] = 0;
+  if (fl & 1) b[u.capsq] = u.cap; else b[to] = u.cap;
+  if (fl & 2) {
+    if (to === 62) { b[63] = b[61]; b[61] = 0; } else if (to === 58) { b[56] = b[59]; b[59] = 0; }
+    else if (to === 6) { b[7] = b[5]; b[5] = 0; } else if (to === 2) { b[0] = b[3]; b[3] = 0; }
+  }
+  s.c = u.c; s.ep = u.ep; s.hm = u.hm; s.ks[0] = u.k0; s.ks[1] = u.k1;
+}
+function legal(s) {
+  const ps = gen(s, false), out = [];
+  for (let i = 0; i < ps.length; i++) {
+    const u = make(s, ps[i]);
+    if (!attacked(s, s.ks[s.t === 1 ? 1 : 0], s.t)) out.push(ps[i]);
+    unmake(s, u);
+  }
+  return out;
+}
+function mv(from, to, promo) { return from | (to << 6) | ((promo || 0) << 12); }
+function fromUCI(s, str) {
+  const f = sqIdx(str.slice(0, 2)), t = sqIdx(str.slice(2, 4)), p = str[4] ? PCH[str[4]] : 0;
+  const L = legal(s);
+  for (const m of L) {
+    const ff = m & 63, mt = (m >> 6) & 63, kd = ((m >> 16) & 2) ? (ff >> 3) * 8 + (mt > ff ? 6 : 2) : mt;
+    if (ff === f && (mt === t || kd === t) && (((m >> 12) & 7) === p || (!str[4] && ((m >> 12) & 7) === 5))) return m;
+  }
+  return 0;
+}
+function toUCI(m) {
+  const p = (m >> 12) & 7;
+  return sqName(m & 63) + sqName((m >> 6) & 63) + (p ? 'pnbrqk'[p - 1] : '');
+}
+function isCapture(m) { return (m >> 16) & 8; }
+
+function san(s, m, L) {
+  L = L || legal(s);
+  const from = m & 63, to = (m >> 6) & 63, promo = (m >> 12) & 7, fl = m >> 16, ty = Math.abs(s.b[from]);
+  let out;
+  if (fl & 2) out = to > from ? 'O-O' : 'O-O-O';
+  else {
+    out = '';
+    if (ty === 1) { if (fl & 8) out += 'abcdefgh'[from & 7]; }
+    else {
+      out += LET[ty];
+      let amb = false, sameFile = false, sameRank = false;
+      for (const o of L) {
+        if (o === m) continue;
+        if (((o >> 6) & 63) === to && (o & 63) !== from && Math.abs(s.b[o & 63]) === ty) {
+          amb = true;
+          if ((o & 7) === (from & 7)) sameFile = true;
+          if ((o & 63) >> 3 === from >> 3) sameRank = true;
+        }
+      }
+      if (amb) {
+        if (!sameFile) out += 'abcdefgh'[from & 7];
+        else if (!sameRank) out += (8 - (from >> 3));
+        else out += sqName(from);
+      }
+    }
+    if (fl & 8) out += 'x';
+    out += sqName(to);
+    if (promo) out += '=' + LET[promo];
+  }
+  const u = make(s, m);
+  const chk = inCheck(s);
+  if (chk) out += legal(s).length ? '+' : '#';
+  unmake(s, u);
+  return out;
+}
+
+function insufficient(s) {
+  let minors = 0, bishopsW = 0, bishopsB = 0;
+  for (let i = 0; i < 64; i++) {
+    const v = s.b[i]; if (!v) continue;
+    const a = Math.abs(v);
+    if (a === 1 || a === 4 || a === 5) return false;
+    if (a === 2 || a === 3) { minors++; if (a === 3) { if (((i >> 3) + (i & 7)) & 1) bishopsB++; else bishopsW++; } }
+  }
+  if (minors <= 1) return true;
+  return minors === bishopsW + bishopsB && (bishopsW === 0 || bishopsB === 0);
+}
+
+function evaluate(s) {
+  const b = s.b; let sc = 0, np = 0;
+  for (let i = 0; i < 64; i++) {
+    const pc = b[i]; if (!pc) continue;
+    const ty = pc > 0 ? pc : -pc;
+    if (ty === 6) continue;
+    const v = VAL[ty] + PST[ty][pc > 0 ? i : i ^ 56];
+    if (pc > 0) sc += v; else sc -= v;
+    if (ty > 1) np += VAL[ty];
+  }
+  const T = np < 2600 ? KE : KM;
+  sc += T[s.ks[0]] - T[s.ks[1] ^ 56];
+  if (s.koth) {
+    const d = k => Math.max(Math.abs((k >> 3) - 3.5), Math.abs((k & 7) - 3.5)) - 0.5;
+    sc += (d(s.ks[1]) - d(s.ks[0])) * 25;
+  }
+  return s.t === 1 ? sc : -sc;
+}
+
+function order(ms, s, pv) {
+  const sc = [];
+  for (let i = 0; i < ms.length; i++) {
+    const m = ms[i], to = (m >> 6) & 63, from = m & 63, fl = m >> 16, p = (m >> 12) & 7;
+    let v = 0;
+    if (m === pv) v = 1e7;
+    else {
+      const cap = (fl & 2) ? 0 : Math.abs(s.b[to]);
+      if (cap) v = 10 * VAL[cap] - VAL[Math.abs(s.b[from])] + 5000;
+      else if (fl & 1) v = 5000 + 900;
+      if (p) v += VAL[p];
+    }
+    sc.push([v, m]);
+  }
+  sc.sort((a, b) => b[0] - a[0]);
+  return sc.map(x => x[1]);
+}
+
+function think(s0, cfg) {
+  const s = clone(s0);
+  const rootMoves = legal(s);
+  if (!rootMoves.length) return null;
+  if (rootMoves.length === 1) return { move: rootMoves[0], score: 0, depth: 0 };
+  const deadline = performance.now() + (cfg.ms || 1000);
+  let stop = false, nodes = 0, rootBest = 0, pv = 0;
+
+  function qs(alpha, beta, ply) {
+    nodes++;
+    const stand = evaluate(s);
+    if (ply > 8) return stand;
+    if (stand >= beta) return stand;
+    if (stand > alpha) alpha = stand;
+    const ms = order(gen(s, true), s, 0);
+    for (let i = 0; i < ms.length; i++) {
+      const u = make(s, ms[i]);
+      if (attacked(s, s.ks[s.t === 1 ? 1 : 0], s.t)) { unmake(s, u); continue; }
+      const sc = -qs(-beta, -alpha, ply + 1);
+      unmake(s, u);
+      if (sc >= beta) return sc;
+      if (sc > alpha) alpha = sc;
+    }
+    return alpha;
+  }
+  function ab(d, alpha, beta, ply) {
+    if ((++nodes & 1023) === 0 && performance.now() > deadline) stop = true;
+    if (stop) return 0;
+    if (ply > 0 && s.hm >= 100) return 0;
+    if (s.koth && ply > 0) { const pk = s.ks[s.t === 1 ? 1 : 0]; if (pk === 27 || pk === 28 || pk === 35 || pk === 36) return -MATE + ply; }
+    const chk = inCheck(s);
+    if (chk && ply < 20) d++;
+    if (d <= 0) return qs(alpha, beta, ply);
+    const ms = order(gen(s, false), s, ply === 0 ? pv : 0);
+    let best = -INF, n = 0;
+    for (let i = 0; i < ms.length; i++) {
+      const u = make(s, ms[i]);
+      if (attacked(s, s.ks[s.t === 1 ? 1 : 0], s.t)) { unmake(s, u); continue; }
+      n++;
+      const sc = -ab(d - 1, -beta, -alpha, ply + 1);
+      unmake(s, u);
+      if (stop) return 0;
+      if (sc > best) { best = sc; if (ply === 0) rootBest = ms[i]; }
+      if (sc > alpha) alpha = sc;
+      if (alpha >= beta) break;
+    }
+    if (!n) return chk ? -MATE + ply : 0;
+    return best;
+  }
+
+  if (cfg.noise) {
+    const res = [];
+    for (const m of rootMoves) {
+      const u = make(s, m);
+      const sc = -ab(Math.max(0, cfg.depth - 1), -INF, INF, 1);
+      unmake(s, u);
+      res.push([sc + (Math.random() - 0.5) * cfg.noise, m, sc]);
+    }
+    res.sort((a, b) => b[0] - a[0]);
+    return { move: res[0][1], score: res[0][2], depth: cfg.depth };
+  }
+  let best = rootMoves[0], bs = 0, reached = 0;
+  for (let d = 1; d <= cfg.depth; d++) {
+    rootBest = 0;
+    const sc = ab(d, -INF, INF, 0);
+    if (rootBest) { best = rootBest; if (!stop) { bs = sc; reached = d; } }
+    if (stop) break;
+    pv = best;
+    if (Math.abs(sc) > MATE - 100) break;
+  }
+  return { move: best, score: bs, depth: reached };
+}
+
+/* ---- forced-mate helpers (for puzzles) ---- */
+function mated(s) { return inCheck(s) && legal(s).length === 0; }
+// side to move can force mate within d plies (d odd)
+function canMate(s, d) {
+  if (d < 1) return false;
+  const L = legal(s), checks = [], quiet = [];
+  for (const m of L) {
+    const u = make(s, m);
+    const chk = inCheck(s);
+    if (chk && legal(s).length === 0) { unmake(s, u); return true; }
+    unmake(s, u);
+    (chk ? checks : quiet).push(m);
+  }
+  if (d < 3) return false;
+  for (const list of [checks, quiet]) {
+    for (const m of list) {
+      const u = make(s, m);
+      const ok = allReplies(s, d - 1);
+      unmake(s, u);
+      if (ok) return true;
+    }
+  }
+  return false;
+}
+function allReplies(s, d) {
+  const L = legal(s);
+  if (!L.length) return false;
+  const ord = order(L, s, 0);
+  for (const m of ord) {
+    const u = make(s, m);
+    const ok = canMate(s, d - 1);
+    unmake(s, u);
+    if (!ok) return false;
+  }
+  return true;
+}
+// moves for side to move that keep a forced mate within d plies
+function mateMoves(s, d) {
+  const out = [];
+  for (const m of legal(s)) {
+    const u = make(s, m);
+    let ok = false;
+    if (mated(s)) ok = true; else if (d >= 3) ok = allReplies(s, d - 1);
+    unmake(s, u);
+    if (ok) out.push(m);
+  }
+  return out;
+}
+// opponent reply that delays mate longest (state: opponent to move, mate in <= d plies)
+function bestDefense(s, d) {
+  let best = 0, bestLen = -1;
+  for (const m of legal(s)) {
+    const u = make(s, m);
+    let len = 99;
+    for (let k = 1; k <= d - 1; k += 2) { if (canMate(s, k)) { len = k; break; } }
+    unmake(s, u);
+    if (len > bestLen) { bestLen = len; best = m; }
+  }
+  return best;
+}
+
+function perft(s, d) {
+  if (d === 0) return 1;
+  let n = 0;
+  for (const m of legal(s)) { const u = make(s, m); n += perft(s, d - 1); unmake(s, u); }
+  return n;
+}
+
+function status(s, hist) {
+  const L = legal(s);
+  if (s.koth) {
+    const c = [27, 28, 35, 36];
+    if (c.includes(s.ks[0])) return { over: true, kind: 'koth', winner: 1 };
+    if (c.includes(s.ks[1])) return { over: true, kind: 'koth', winner: -1 };
+  }
+  if (!L.length) return inCheck(s) ? { over: true, kind: 'mate', winner: -s.t } : { over: true, kind: 'stalemate', winner: 0 };
+  if (s.hm >= 100) return { over: true, kind: 'fifty', winner: 0 };
+  if (insufficient(s)) return { over: true, kind: 'insufficient', winner: 0 };
+  if (hist) {
+    const k = key(s); let n = 0;
+    for (const h of hist) if (h === k) n++;
+    if (n >= 3) return { over: true, kind: 'repetition', winner: 0 };
+  }
+  return { over: false, check: inCheck(s) };
+}
+
+function chess960() {
+  const row = new Array(8).fill(null);
+  const light = [1, 3, 5, 7], dark = [0, 2, 4, 6];
+  const pick = a => a.splice(Math.floor(Math.random() * a.length), 1)[0];
+  row[pick(dark.slice())] = 'b';
+  row[pick(light.slice())] = 'b';
+  let free = [0,1,2,3,4,5,6,7].filter(i => !row[i]);
+  row[pick(free)] = 'q'; free = free.filter(i => !row[i]);
+  row[pick(free)] = 'n'; free = free.filter(i => !row[i]);
+  row[pick(free)] = 'n'; free = free.filter(i => !row[i]);
+  row[free[0]] = 'r'; row[free[1]] = 'k'; row[free[2]] = 'r';
+  const w = row.join('');
+  return w + '/pppppppp/8/8/8/8/PPPPPPPP/' + w.toUpperCase() + ' w KQkq - 0 1';
+}
+
+return { START, fromFEN, toFEN, key, clone, legal, make, unmake, gen, attacked, inCheck, fromUCI, toUCI, san, status, think, evaluate,
+  canMate, allReplies, mateMoves, bestDefense, mated, perft, sqName, sqIdx, chess960, mv, isCapture, insufficient };
+})();
+
+</script>
+<script id="runner">
+function __run(d) {
+  var s = Engine.fromFEN(d.fen);
+  if (d.koth) s.koth = true;
+  if (d.op === 'think') return Engine.think(s, d.cfg);
+  if (d.op === 'mateMoves') return Engine.mateMoves(s, d.d);
+  if (d.op === 'defense') return Engine.bestDefense(s, d.d);
+  return null;
+}
+
+</script>
+<script>
+var PUZ=[{"f":"2r2b1r/7p/7k/6p1/1p4Q1/1P2B2P/P1P2PK1/3R4 w - g6 0 40","n":1,"sol":"g4g5"},{"f":"2r2b1r/5k1p/3R4/6p1/1p1B2Q1/1P5P/P1P2PK1/8 w - - 4 42","n":1,"sol":"g4e6"},{"f":"8/6pp/1n1k4/2b5/p1P1b1PP/P1K1P2B/5r2/8 b - - 1 48","n":1,"sol":"f2c2"},{"f":"3k4/1rp2pN1/2n5/p3p3/4P3/Q4P1B/PP6/1R4K1 w - - 6 41","n":1,"sol":"a3f8"},{"f":"3k4/1rp2pN1/8/p3p3/3nP3/Q4P1B/PP6/3R2K1 w - - 8 42","n":1,"sol":"a3f8"},{"f":"3k4/1rp2pN1/8/p7/3pP3/Q4P1B/PP6/6K1 w - - 0 43","n":1,"sol":"a3f8"},{"f":"1K6/1p5p/1bb5/3k1p2/8/8/6r1/8 b - - 9 52","n":1,"sol":"g2g8"},{"f":"2K5/1p5p/1bbk4/5p2/8/8/6r1/8 b - - 11 53","n":1,"sol":"g2g8"},{"f":"3K4/1p5p/2bk4/2b2p2/8/8/6r1/8 b - - 13 54","n":1,"sol":"g2g8"},{"f":"2K5/1p5p/2bk2r1/2b2p2/8/8/8/8 b - - 15 55","n":1,"sol":"g6g8"},{"f":"2r2b1r/6pp/7k/8/1p1B2Q1/1P5P/P1P2PK1/3R4 w - - 10 39","n":2,"sol":"d4e3"},{"f":"2r2b1r/6kp/3R4/6p1/1p4Q1/1P2B2P/P1P2PK1/8 w - - 2 41","n":2,"sol":"e3d4"},{"f":"8/6pp/1n1k4/p1b5/2P1b1PP/PK2P2B/5r2/8 b - - 0 47","n":2,"sol":"a5a4"},{"f":"1r2k3/pBp3Q1/2np4/4p3/7P/4P3/PPPN1P2/R1B1K2R w KQ - 1 21","n":2,"sol":"b7c6"},{"f":"5b1r/1R3B2/3p4/p1k2Np1/P3P3/6N1/4KPP1/8 w - - 3 53","n":2,"sol":"f7d5"},{"f":"3r4/1pp3p1/2k1B3/2P2pRp/5P1P/4q3/2K3P1/8 b - - 3 48","n":2,"sol":"d8d2"},{"f":"5rk1/2p4p/4p1p1/2P5/4pB2/2b5/r5PP/1R3K1R b - - 0 33","n":2,"sol":"f8f4"},{"f":"8/8/3kp3/3p4/p1n4r/4q3/6K1/8 b - - 3 60","n":2,"sol":"h4g4"},{"f":"2r2b1r/6pp/4Q3/7k/1p1B4/1P5P/P1P2PK1/3R4 w - - 8 38","n":3,"sol":"e6g4"},{"f":"rnb1k3/ppp3Q1/3p4/4pB2/7P/4P3/PPPN1P2/R1B1K2R w KQ - 1 19","n":3,"sol":"f5g6"},{"f":"8/1rpk1pN1/2n5/p3p3/4P3/Q4P2/PP4B1/1R4K1 w - - 4 40","n":3,"sol":"g2h3"},{"f":"r3k3/pbp2p2/7p/2qpp2B/P2b1Q2/3P3P/1PP2PP1/R1B2KR1 w - - 0 25","n":2,"sol":"f4f7"},{"f":"N1br3k/pp2q3/6QB/3pp3/8/2P2P2/PP2P1P1/R3KBNR w KQ - 2 20","n":2,"sol":"h6g7"},{"f":"6k1/8/5Q2/7P/5P2/P6P/1P6/5K2 w - - 5 53","n":2,"sol":"h5h6"},{"f":"8/7k/5Q2/7P/5P2/P6P/1P3K2/8 w - - 7 54","n":2,"sol":"h5h6"},{"f":"N1br2k1/pp2q3/7B/3pp3/8/2P2P2/PPQ1P1P1/R3KBNR w KQ - 0 19","n":3,"sol":"c2g6"},{"f":"7k/8/6Q1/7P/5P2/P6P/1P3K2/8 w - - 9 55","n":3,"sol":"g6g5"},{"f":"6k1/8/7Q/5P1P/8/P6P/1P3K2/8 w - - 5 59","n":3,"sol":"h6f6"}];
+(function(){
+'use strict';
+var E=Engine;
+/* ---------- storage ---------- */
+var DEF={coins:120,rating:1000,streak:0,best:0,skin:'classic',owned:['classic','slate'],premium:false,pass:false,lang:null,
+  day:'',hints:0,hintBonus:0,pzSolved:[],pzBonus:0,wins:0,games:0,solved:0,arena:0,claimed:[],lessons:[],adp:{},unl:{}};
+var S=JSON.parse(JSON.stringify(DEF));
+try{var raw=localStorage.getItem('heather-chess-v1');if(raw){Object.assign(S,JSON.parse(raw))}}catch(e){}
+S.adp=S.adp||{};S.unl=S.unl||{};
+function save(){try{localStorage.setItem('heather-chess-v1',JSON.stringify(S))}catch(e){}}
+function today(){return new Date().toISOString().slice(0,10)}
+function roll(){if(S.day!==today()){S.day=today();S.hints=0;S.hintBonus=0;S.pzSolved=[];S.pzBonus=0;save()}}
+roll();
+var lang=S.lang||((navigator.language||'en').toLowerCase().indexOf('vi')===0?'vi':'en');
+var L=function(e,v){return lang==='vi'?v:e};
+function $(q,el){return (el||document).querySelector(q)}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+/* ---------- monetization hooks (demo: nothing is charged, no real ads) ---------- */
+var Monet={
+  premium:function(){return S.premium},
+  pass:function(){return S.pass||S.premium===2},
+  // Wire a real rewarded ad network here (AdMob, Unity Ads...). Call onReward() only after the ad completes.
+  rewarded:function(why,onReward){
+    if(S.premium){onReward();return}
+    // Real ads: after Google approves H5 Games Ads (adBreak) for your site, load its script and set window.__h5ads=true.
+    if(typeof window.adBreak==='function'&&window.__h5ads){
+      var seen=false;
+      window.adBreak({type:'reward',name:'unlock',beforeReward:function(show){show()},adViewed:function(){seen=true;onReward()},
+        adDismissed:function(){toast(L('Watch the full ad to get the reward','Hãy xem hết quảng cáo để nhận thưởng'))},
+        adBreakDone:function(i){if(!seen&&i&&i.breakStatus!=='dismissed'&&i.breakStatus!=='viewed')toast(L('No ad available right now, try again later','Chưa có quảng cáo, hãy thử lại sau'))}});
+      return}
+    var n=5,v=sheet('<h3>'+L('Sample rewarded ad','Quảng cáo thưởng (mẫu)')+'</h3><p class="muted sm">'+L('Placeholder for a real ad network. Reward: ','Chỗ cho mạng quảng cáo thật. Phần thưởng: ')+esc(why)+'</p><div class="panel" style="min-height:110px;align-items:center;justify-content:center"><b id="adn" style="font-size:34px;font-family:var(--font-display)">5</b></div><button class="btn pri" id="adgo" disabled>'+L('Claim reward','Nhận thưởng')+'</button><button class="btn ghost" id="adx">'+L('Cancel','Hủy')+'</button>');
+    var iv=setInterval(function(){n--;var el=$('#adn',v);if(!el){clearInterval(iv);return}el.textContent=n;if(n<=0){clearInterval(iv);$('#adgo',v).disabled=false}},1000);
+    $('#adx',v).onclick=function(){clearInterval(iv);closeSheet()};
+    $('#adgo',v).onclick=function(){closeSheet();onReward()};
+  },
+  // Wire Stripe / App Store / Google Play billing here.
+  buy:function(plan){
+    if(plan==='premium')S.premium=true; if(plan==='pass')S.pass=true;
+    save();toast(L('Unlocked (demo purchase)','Đã mở khóa (mua thử)'));
+  }
+};
+var GATE={puzzles:3,academy:3,arena:4,crazy:4,fantasy:5};
+var GNAME={puzzles:['Puzzle Challenge','Thử thách thế cờ'],academy:['Chess Academy','Học viện cờ vua'],arena:['Battle Arena','Đấu trường'],crazy:['Crazy Chess','Crazy Chess'],fantasy:['Fantasy Chess','Fantasy Chess']};
+function unlocked(g){return !GATE[g]||!!S.premium||!!S.unl[g]}
+function gate(g,open){
+  if(unlocked(g))return open();
+  var need=GATE[g],n=S.adp[g]||0,dots='',nm=GNAME[g][lang==='vi'?1:0];
+  for(var i=0;i<need;i++)dots+='<i class="'+(i<n?'done':i===n?'now':'')+'"></i>';
+  var v=sheet('<h3>🔒 '+nm+'</h3><p class="muted sm">'+L('Watch '+need+' short ads to unlock this mode for good. Classic Chess stays free.','Xem '+need+' quảng cáo ngắn để mở khóa vĩnh viễn chế độ này. Classic Chess luôn miễn phí.')+'</p><div class="dots">'+dots+'</div><p class="sm muted">'+n+'/'+need+' '+L('ads watched','quảng cáo đã xem')+'</p><button class="btn pri" id="gw">'+L('Watch ad ','Xem quảng cáo ')+(n+1)+'/'+need+'</button><button class="btn" id="gp">Premium</button><button class="btn ghost" id="gx">'+L('Not now','Để sau')+'</button>');
+  $('#gx',v).onclick=closeSheet;
+  $('#gp',v).onclick=function(){go('premium')};
+  $('#gw',v).onclick=function(){Monet.rewarded(L('Unlock ','Mở khóa ')+nm,function(){
+    S.adp[g]=(S.adp[g]||0)+1;
+    if(S.adp[g]>=need){S.unl[g]=1;save();toast(L('Unlocked!','Đã mở khóa!'));open()}else{save();gate(g,open)}})};
+}
+function hintsLeft(){return S.premium?99:Math.max(0,3+S.hintBonus-S.hints)}
+function useHint(){if(!S.premium){S.hints++;save()}}
+function askHintAd(after){Monet.rewarded(L('+3 hints','+3 gợi ý'),function(){S.hintBonus+=3;save();toast(L('+3 hints','+3 gợi ý'));if(after)after()})}
+function pzLimit(){return S.premium?999:5+S.pzBonus}
+
+/* ---------- engine worker ---------- */
+var worker=null,pending={},wid=0;
+try{
+  var src=$('#engine').textContent+'\n'+$('#runner').textContent+'\nonmessage=function(e){var d=e.data,r=null;try{r=__run(d)}catch(x){}postMessage({id:d.id,r:r})};';
+  worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+  worker.onmessage=function(e){var p=pending[e.data.id];if(p){delete pending[e.data.id];p(e.data.r)}};
+  worker.onerror=function(){worker=null};
+}catch(e){worker=null}
+function ask(d){
+  return new Promise(function(res){
+    if(worker){d.id=++wid;pending[d.id]=res;worker.postMessage(d)}
+    else setTimeout(function(){var r=null;try{r=__run(d)}catch(x){}res(r)},20);
+  });
+}
+var LV={1:{depth:2,ms:250,noise:160},2:{depth:3,ms:500,noise:40},3:{depth:5,ms:1300},4:{depth:7,ms:2600}};
+var LVN=function(l){return [0,L('Easy','Dễ'),L('Medium','Vừa'),L('Hard','Khó'),L('Expert','Cao thủ')][l]};
+var BOT=[0,900,1300,1700,2100];
+
+/* ---------- skins ---------- */
+var SK={
+  classic:{n:['Classic Wood','Gỗ cổ điển'],p:0,v:{'--sq-l':'#e8c99b','--sq-d':'#a9743f','--pw':'#fff','--pb':'#1b1b1b','--po':'#222'}},
+  slate:{n:['Arena Slate','Xám đấu trường'],p:0,v:{'--sq-l':'#d4dce8','--sq-d':'#6c819e','--pw':'#fff','--pb':'#101826','--po':'#223'}},
+  emerald:{n:['Fantasy Emerald','Ngọc lục bảo'],p:400,v:{'--sq-l':'#24504a','--sq-d':'#0f2622','--pw':'#9dffe0','--pb':'#9a8cff','--po':'#06201c','--glow':'0 0 8px currentColor','--hl':'rgba(125,255,214,.28)'}},
+  crimson:{n:['Royal Crimson','Đỏ hoàng gia'],p:650,v:{'--sq-l':'#ecd9c8','--sq-d':'#8d2e33','--pw':'#fbf1d8','--pb':'#3a0d12','--po':'#4a1217'}},
+  gold:{n:['Season Gold','Vàng mùa giải'],pass:1,v:{'--sq-l':'#f2dc9a','--sq-d':'#9a7420','--pw':'#fffbe8','--pb':'#2b2008','--po':'#5a430c','--glow':'0 0 6px rgba(255,200,60,.8)'}},
+  frost:{n:['Season Frost','Băng giá mùa giải'],pass:1,v:{'--sq-l':'#dff0ff','--sq-d':'#4f7aa8','--pw':'#ffffff','--pb':'#0a2038','--po':'#1c4670','--glow':'0 0 7px rgba(150,220,255,.9)'}}
+};
+function skinCss(id){var v=SK[id||S.skin].v,o='';for(var k in v)o+=k+':'+v[k]+';';return o}
+function owns(id){return S.owned.indexOf(id)>=0||(SK[id].pass&&Monet.pass())}
+
+/* ---------- ui helpers ---------- */
+function toast(m){var t=document.createElement('div');t.textContent=m;t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:80;max-width:90%';document.body.appendChild(t);setTimeout(function(){t.remove()},2200)}
+function sheet(html){closeSheet();var v=document.createElement('div');v.className='veil';v.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';v.addEventListener('click',function(e){if(e.target===v)closeSheet()});$('#layer').appendChild(v);return v}
+function closeSheet(){$('#layer').innerHTML=''}
+var cleanup=null;
+function go(name,arg){if(cleanup){cleanup();cleanup=null}closeSheet();window.scrollTo(0,0);cur={n:name,a:arg};SCREENS[name](arg)}
+var cur={n:'home'};
+function top(title,back){return '<div class="top"><button class="btn icon" id="back" aria-label="'+L('Back','Quay lại')+'">&#8592;</button><h2 class="grow">'+title+'</h2><span class="chip">&#9679; '+S.coins+'</span></div>'}
+function bindBack(to){var b=$('#back');if(b)b.onclick=function(){go(to||'home')}}
+function adSlot(){return S.premium?'':'<button class="ad" id="adslot"><span>'+L('Ad slot (banner)','Vị trí quảng cáo (banner)')+'</span><b style="color:var(--accent)">'+L('Remove ads','Bỏ quảng cáo')+'</b></button>'}
+function bindAd(){var a=$('#adslot');if(a)a.onclick=function(){go('premium')}}
+function addCoins(n){S.coins+=n;save()}
+
+/* ---------- board component ---------- */
+var GL={1:'♙︎',2:'♘︎',3:'♗︎',4:'♖︎',5:'♕︎',6:'♔︎'};
+var GF={1:'♟︎',2:'♞︎',3:'♝︎',4:'♜︎',5:'♛︎',6:'♚︎'};
+function makeBoard(host){
+  host.className='board';host.style.cssText=skinCss();host.innerHTML='';
+  var B={s:null,flip:false,sel:-1,last:null,hints:[],legal:[],onMove:null,mine:function(){return true},locked:false},cells=[];
+  for(var p=0;p<64;p++){var c=document.createElement('button');c.type='button';c.dataset.p=p;host.appendChild(c);cells.push(c)}
+  host.addEventListener('click',function(e){var c=e.target.closest('.sq');if(c)B.click(B.flip?63-(+c.dataset.p):+c.dataset.p)});
+  B.set=function(s,last){B.s=s;B.last=last||null;B.sel=-1;B.hints=[];B.legal=E.legal(s);B.render()};
+  B.render=function(){
+    var s=B.s,chk=E.inCheck(s)?s.ks[s.t===1?0:1]:-1,tg=[];
+    if(B.sel>=0)B.legal.forEach(function(m){if((m&63)===B.sel){var q=(m>>6)&63,f0=m&63;if((m>>16)&2)q=(f0>>3)*8+(q>f0?6:2);tg.push(q)}});
+    for(var p=0;p<64;p++){
+      var i=B.flip?63-p:p,c=cells[p],v=s.b[i],cl='sq '+((((i>>3)+(i&7))&1)?'d':'l');
+      if(B.last&&((B.last&63)===i||((B.last>>6)&63)===i))cl+=' last';
+      if(i===B.sel)cl+=' sel'; if(B.hints.indexOf(i)>=0)cl+=' hint'; if(i===chk)cl+=' chk';
+      if(tg.indexOf(i)>=0)cl+=v?' cap':' dot';
+      var row=p>>3,col=p&7;
+      if(row===7){cl+=' fl';c.dataset.f='abcdefgh'[i&7]} if(col===0){cl+=' rk';c.dataset.r=8-(i>>3)}
+      c.className=cl;
+      c.innerHTML=(tg.indexOf(i)>=0?'<i></i>':'')+(v?'<span class="pc '+(v>0?'w':'b')+'">'+GF[Math.abs(v)]+'</span>':'');
+      c.setAttribute('aria-label',E.sqName(i)+(v?' '+(v>0?'white ':'black ')+'pnbrqk'[Math.abs(v)-1]:''));
+    }
+  };
+  B.click=function(i){
+    if(B.locked||!B.s)return;
+    var s=B.s;
+    if(B.sel>=0){
+      var ms=B.legal.filter(function(m){return (m&63)===B.sel&&((m>>6)&63)===i});
+      if(!ms.length)ms=B.legal.filter(function(m){var f0=m&63,q=(m>>6)&63;return f0===B.sel&&((m>>16)&2)&&((f0>>3)*8+(q>f0?6:2))===i});
+      if(ms.length){
+        if(ms.length>1)return promo(ms);
+        return B.onMove&&B.onMove(ms[0]);
+      }
+    }
+    var v=s.b[i];
+    if(v&&((v>0)?1:-1)===s.t&&B.mine(s.t)){B.sel=(B.sel===i?-1:i)}else B.sel=-1;
+    B.render();
+  };
+  function promo(ms){
+    var d=document.createElement('div');d.className='promo';
+    ms.sort(function(a,b){return ((b>>12)&7)-((a>>12)&7)}).forEach(function(m){
+      var b=document.createElement('button');b.textContent=GF[(m>>12)&7];b.setAttribute('aria-label','promote');
+      b.onclick=function(ev){ev.stopPropagation();d.remove();B.onMove&&B.onMove(m)};d.appendChild(b)});
+    host.appendChild(d);
+  }
+  B.shake=function(){host.classList.remove('shake');void host.offsetWidth;host.classList.add('shake')};
+  return B;
+}
+
+/* ---------- game screen (classic, arena, variants) ---------- */
+function mm(ms){var t=Math.max(0,Math.ceil(ms/1000));return Math.floor(t/60)+':'+('0'+(t%60)).slice(-2)}
+function startGame(cfg){
+  var s=E.fromFEN(cfg.fen||E.START);if(cfg.koth)s.koth=true;
+  var G={cfg:cfg,s:s,hist:[],keys:[E.key(s)],tok:0,over:false,human:cfg.vs==='pvp'?0:cfg.color,
+    clock:cfg.clock?[cfg.clock*1000,cfg.clock*1000]:null,last:Date.now()};
+  var app=$('#app');
+  var title=cfg.mode==='arena'?L('Battle Arena','Đấu trường'):cfg.koth?L('King of the Hill','Vua đồi'):cfg.variant==='960'?'Chess 960':cfg.variant==='dq'?L('Double Queens','Hai Hậu'):L('Classic Chess','Cờ vua Classic');
+  app.innerHTML=top(title)+
+    '<div class="pbar"><span class="nm" id="nmT"></span><span class="clock" id="clT" hidden></span></div>'+
+    '<div id="bd"></div>'+
+    '<div class="pbar"><span class="nm" id="nmB"></span><span class="clock" id="clB" hidden></span></div>'+
+    '<div class="status" id="st"></div><div class="moves" id="mv" aria-label="moves"></div>'+
+    '<div class="ctrl"><button class="btn" id="bU">'+L('Undo','Đi lại')+'</button><button class="btn" id="bH">'+L('Hint','Gợi ý')+'</button><button class="btn" id="bF">'+L('Flip','Xoay')+'</button><button class="btn" id="bR">'+L('Resign','Đầu hàng')+'</button></div>'+adSlot();
+  bindBack(cfg.mode==='arena'?'arena':cfg.koth||cfg.variant==='960'||cfg.variant==='dq'?'crazy':'home');bindAd();
+  var B=makeBoard($('#bd'));
+  B.flip=G.human===-1;
+  B.mine=function(c){return G.human===0||c===G.human};
+  var names=G.human===0?[L('Black','Quân đen'),L('White','Quân trắng')]:(G.human===1?[LVN(cfg.level)+' AI',L('You','Bạn')]:[L('You','Bạn'),LVN(cfg.level)+' AI']);
+  function paint(){
+    var bt=B.flip?1:-1; // colour shown at top
+    var lab=function(c){return (c===1?'○ ':'● ')+(G.human===0?(c===1?L('White','Quân trắng'):L('Black','Quân đen')):(c===G.human?L('You','Bạn'):LVN(cfg.level)+' AI'))};
+    $('#nmT').textContent=lab(bt);$('#nmB').textContent=lab(-bt);
+    var cl=G.clock;
+    ['clT','clB'].forEach(function(id,k){var el=$('#'+id);el.hidden=!cl;if(!cl)return;var col=k===0?bt:-bt,ms=cl[col===1?0:1];el.textContent=mm(ms);el.className='clock'+(!G.over&&G.s.t===col?' on':'')+(ms<10000?' low':'')});
+    var mv=$('#mv'),h='';
+    G.hist.forEach(function(x,i){h+=(i%2===0?'<span>'+(i/2+1)+'.</span>':'')+'<b>'+esc(x.san)+'</b>'});
+    mv.innerHTML=h;mv.scrollLeft=mv.scrollWidth;
+  }
+  function setStatus(t,c){var e=$('#st');e.textContent=t;e.className='status '+(c||'')}
+  function turnText(){
+    var st=E.status(G.s,G.keys);
+    var side=G.s.t===1?L('White','Trắng'):L('Black','Đen');
+    return (st.check?L('Check! ','Chiếu! '):'')+side+L(' to move',' đi')
+  }
+  function refresh(last){B.set(G.s,last);paint();if(!G.over)setStatus(G.human&&G.s.t!==G.human?L('Thinking...','Đang nghĩ...'):turnText(),E.inCheck(G.s)?'bad':'')}
+  function play(m){
+    var before=E.toFEN(G.s),san=E.san(G.s,m),col=G.s.t;
+    if(G.clock&&cfg.inc)G.clock[col===1?0:1]+=cfg.inc*1000;
+    E.make(G.s,m);G.keys.push(E.key(G.s));
+    G.hist.push({m:m,san:san,before:before,after:E.toFEN(G.s),col:col});
+    var st=E.status(G.s,G.keys);
+    refresh(m);
+    if(st.over)return finish(st);
+    if(G.human&&G.s.t!==G.human)ai();
+  }
+  async function ai(){
+    var tok=++G.tok;B.locked=true;var t0=Date.now();
+    var r=await ask({op:'think',fen:E.toFEN(G.s),koth:!!G.s.koth,cfg:LV[cfg.level]});
+    var w=350-(Date.now()-t0);if(w>0)await sleep(w);
+    if(tok!==G.tok||G.over)return;
+    B.locked=false;
+    if(r&&r.move)play(r.move);
+  }
+  B.onMove=function(m){if(G.over)return;if(G.human&&G.s.t!==G.human)return;play(m)};
+  function finish(st,timeLoser){
+    G.over=true;G.tok++;B.locked=true;clearInterval(G.iv);
+    var win=0,txt;
+    if(timeLoser){win=-timeLoser;txt=st.kind==='resign'?L('Resigned','Đầu hàng'):L('Time out','Hết giờ')}
+    else if(st.kind==='mate'||st.kind==='koth'){win=st.winner;txt=st.kind==='mate'?L('Checkmate','Chiếu hết'):L('King reached the hill','Vua lên đồi')}
+    else txt={stalemate:L('Stalemate','Hòa cờ (hết nước)'),fifty:L('Draw: 50-move rule','Hòa: luật 50 nước'),insufficient:L('Draw: not enough material','Hòa: thiếu quân'),repetition:L('Draw: repetition','Hòa: lặp thế')}[st.kind];
+    if(timeLoser)win=-timeLoser;
+    var res=G.human===0?(win===0?0:1):(win===0?0:(win===G.human?1:-1));
+    var reward=0,rt='';
+    if(G.human!==0){
+      reward=res===1?30:res===0?10:5;if(cfg.mode==='arena')reward*=2;
+      S.games++;if(res===1)S.wins++;
+      if(res===1){S.streak++;S.best=Math.max(S.best,S.streak)}else if(res===-1)S.streak=0;
+      if(cfg.mode==='arena'){S.arena++;var ex=1/(1+Math.pow(10,(BOT[cfg.level]-S.rating)/400)),d=Math.round(32*((res===1?1:res===0?.5:0)-ex));S.rating+=d;rt='<p class="muted">'+L('Rating','Điểm Elo')+': <b>'+S.rating+'</b> ('+(d>=0?'+':'')+d+')</p>'}
+      addCoins(reward);
+    }
+    setStatus(txt+(G.human===0?(win?' · '+(win===1?L('White wins','Trắng thắng'):L('Black wins','Đen thắng')):''):(res===1?' · '+L('You win!','Bạn thắng!'):res===-1?' · '+L('You lose','Bạn thua'):'')),res===1?'good':res===-1?'bad':'');
+    setTimeout(function(){
+      var v=sheet('<h3>'+esc(txt)+(G.human===0?'':(res===1?' — '+L('You win!','Bạn thắng!'):res===-1?' — '+L('You lose','Bạn thua'):''))+'</h3>'+rt+
+        (reward?'<p>+'+reward+' '+L('coins','xu')+'</p>':'')+
+        '<div class="row wrap"><button class="btn pri grow" id="rm">'+L('Rematch','Chơi lại')+'</button>'+(G.human!==0&&G.hist.length>5?'<button class="btn grow" id="rv">'+L('Review mistakes','Xem lỗi')+'</button>':'')+'<button class="btn grow" id="hm">'+L('Home','Trang chủ')+'</button></div>'+
+        (S.premium?'':'<button class="btn ghost sm" id="dbl">'+L('Watch ad: double coins','Xem quảng cáo: nhân đôi xu')+'</button>'));
+      $('#rm',v).onclick=function(){var c2=Object.assign({},cfg);if(cfg.color===0||cfg.rand)c2.color=Math.random()<.5?1:-1;else if(cfg.vs!=='pvp')c2.color=-cfg.color;if(cfg.variant==='960')c2.fen=E.chess960();startGame(c2)};
+      $('#hm',v).onclick=function(){go('home')};
+      if($('#rv',v))$('#rv',v).onclick=function(){reviewGame(G)};
+      if($('#dbl',v))$('#dbl',v).onclick=function(){Monet.rewarded(L('Double coins','Nhân đôi xu'),function(){addCoins(reward);toast('+'+reward);closeSheet()})};
+    },700);
+  }
+  $('#bU').onclick=function(){
+    if(G.over||!G.hist.length)return;
+    G.tok++;B.locked=false;
+    var n=G.human===0?1:(G.s.t===G.human?2:1);
+    if(G.human&&G.hist.length<n)n=1;
+    var x;for(var i=0;i<n;i++)x=G.hist.pop(),G.keys.pop();
+    G.s=E.fromFEN(x.before);if(cfg.koth)G.s.koth=true;
+    refresh(G.hist.length?G.hist[G.hist.length-1].m:null);
+    if(G.human&&G.s.t!==G.human)ai();
+  };
+  $('#bF').onclick=function(){B.flip=!B.flip;B.render();paint()};
+  $('#bR').onclick=function(){if(G.over)return;var v=sheet('<h3>'+L('Resign this game?','Đầu hàng ván này?')+'</h3><div class="row"><button class="btn grow" id="n">'+L('Keep playing','Chơi tiếp')+'</button><button class="btn pri grow" id="y">'+L('Resign','Đầu hàng')+'</button></div>');
+    $('#n',v).onclick=closeSheet;$('#y',v).onclick=function(){closeSheet();finish({over:true,kind:'resign',winner:-(G.human||G.s.t)},G.human||G.s.t)}};
+  $('#bH').onclick=async function(){
+    if(G.over||B.locked||(G.human&&G.s.t!==G.human))return;
+    if(cfg.mode==='arena')return toast(L('No hints in Arena','Đấu trường không có gợi ý'));
+    if(!hintsLeft())return askHintAd(function(){$('#bH').click()});
+    useHint();setStatus(L('Analyzing...','Đang phân tích...'));B.locked=true;
+    var r=await ask({op:'think',fen:E.toFEN(G.s),koth:!!G.s.koth,cfg:{depth:5,ms:900}});
+    B.locked=false;if(G.over||!r)return;
+    B.hints=[r.move&63,(r.move>>6)&63];B.render();
+    var sc=r.score/100;setStatus(L('Best: ','Nước tốt nhất: ')+E.san(G.s,r.move)+'  ('+(sc>=0?'+':'')+sc.toFixed(1)+')  · '+hintsLeft()+' '+L('hints left','gợi ý còn'));
+  };
+  if(G.clock){
+    G.last=Date.now();
+    G.iv=setInterval(function(){
+      if(G.over)return;var n=Date.now(),d=n-G.last;G.last=n;
+      if(G.hist.length<1)return;
+      var k=G.s.t===1?0:1;G.clock[k]-=d;
+      if(G.clock[k]<=0){G.clock[k]=0;paint();finish({over:true,kind:'time'},G.s.t)}else paint();
+    },200);
+  }
+  cleanup=function(){G.over=true;G.tok++;clearInterval(G.iv)};
+  refresh(null);
+  if(G.human&&G.human!==1)ai();
+}
+
+/* ---------- mistake review (engine based) ---------- */
+async function reviewGame(G){
+  var v=sheet('<h3>'+L('Reviewing your moves...','Đang xem lại nước đi...')+'</h3><div class="bar"><i id="pg" style="width:0"></i></div>');
+  var mine=G.hist.filter(function(x){return x.col===G.human}).slice(-24),out=[];
+  for(var i=0;i<mine.length;i++){
+    var x=mine[i];
+    var a=await ask({op:'think',fen:x.before,koth:!!G.s.koth,cfg:{depth:3,ms:180}});
+    if(a&&a.move!==x.m){
+      var b=await ask({op:'think',fen:x.after,koth:!!G.s.koth,cfg:{depth:3,ms:180}});
+      var after;if(b)after=-b.score;else{var t=E.fromFEN(x.after);after=E.inCheck(t)?30000:0}
+      var loss=a.score-after;
+      if(loss>=60){var st=E.fromFEN(x.before);out.push({loss:loss,san:x.san,best:E.san(st,a.move),cap:E.isCapture(a.move)})}
+    }
+    var pg=$('#pg');if(pg)pg.style.width=Math.round((i+1)/mine.length*100)+'%';
+  }
+  out.sort(function(a,b){return b.loss-a.loss});out=out.slice(0,4);
+  var h='<h3>'+L('Move review','Nhận xét nước đi')+'</h3>';
+  if(!out.length)h+='<p>'+L('No clear mistakes found. Well played!','Không thấy sai lầm rõ ràng. Chơi tốt!')+'</p>';
+  out.forEach(function(o){
+    var k=o.loss>=300?['',L('Blunder','Sai lầm nặng')]:o.loss>=150?['m',L('Mistake','Sai lầm')]:['i',L('Inaccuracy','Chưa chính xác')];
+    h+='<div class="rev '+k[0]+'"><b>'+k[1]+': '+esc(o.san)+'</b><div class="sm">'+L('Costs about ','Mất khoảng ')+(o.loss>=2000?L('the game','cả ván'):(o.loss/100).toFixed(1)+L(' pawns',' tốt'))+'. '+L('Better: ','Tốt hơn: ')+'<b>'+esc(o.best)+'</b>'+(o.cap?' '+L('(a capture was available)','(có thể ăn quân)'):'')+'</div></div>';
+  });
+  h+='<p class="muted sm">'+L('Computed by the built-in engine (depth 3).','Do engine tích hợp tính (độ sâu 3).')+'</p><button class="btn pri" id="ok">OK</button>';
+  v=sheet(h);$('#ok',v).onclick=closeSheet;
+}
+
+/* ---------- setup sheet ---------- */
+function setup(opts){
+  var st={vs:'ai',level:2,color:1};
+  var v=sheet('');
+  function draw(){
+    v.firstChild.innerHTML='<h3>'+opts.title+'</h3>'+
+      '<div class="lbl">'+L('Opponent','Đối thủ')+'</div><div class="seg" id="o"><button data-k="vs" data-v="ai" class="'+(st.vs==='ai'?'on':'')+'">'+L('Computer','Máy')+'</button><button data-k="vs" data-v="pvp" class="'+(st.vs==='pvp'?'on':'')+'">'+L('Friend (same device)','Bạn (cùng thiết bị)')+'</button></div>'+
+      (st.vs==='ai'?'<div class="lbl">'+L('Level','Độ khó')+'</div><div class="seg">'+[1,2,3,4].map(function(l){return '<button data-k="level" data-v="'+l+'" class="'+(st.level===l?'on':'')+'">'+LVN(l)+(l===4&&!S.premium?' 🔒':'')+'</button>'}).join('')+'</div>'+
+      '<div class="lbl">'+L('You play','Bạn cầm quân')+'</div><div class="seg"><button data-k="color" data-v="1" class="'+(st.color===1?'on':'')+'">'+L('White','Trắng')+'</button><button data-k="color" data-v="-1" class="'+(st.color===-1?'on':'')+'">'+L('Black','Đen')+'</button><button data-k="color" data-v="0" class="'+(st.color===0?'on':'')+'">'+L('Random','Ngẫu nhiên')+'</button></div>':'')+
+      '<button class="btn pri" id="go">'+L('Start game','Bắt đầu')+'</button>';
+    v.querySelectorAll('.seg button').forEach(function(b){b.onclick=function(){
+      var k=b.dataset.k,val=b.dataset.v;val=k==='vs'?val:+val;
+      if(k==='level'&&val===4&&!S.premium){closeSheet();return go('premium')}
+      st[k]=val;draw()}});
+    $('#go',v).onclick=function(){
+      var c=st.color,rand=c===0;if(rand)c=Math.random()<.5?1:-1;
+      var cfg=Object.assign({mode:'classic',vs:st.vs,level:st.level,color:c,rand:rand},opts.cfg||{});
+      if(opts.cfg&&opts.cfg.variant==='960')cfg.fen=E.chess960();
+      closeSheet();startGame(cfg)};
+  }
+  draw();
+}
+
+/* ---------- puzzles ---------- */
+function dayNum(){return Math.floor(Date.now()/864e5)}
+function dailySet(){var a=[],n=PUZ.length;for(var i=0;i<10;i++)a.push((dayNum()*10+i)%n);a.sort(function(x,y){return PUZ[x].n-PUZ[y].n||x-y});return a}
+function puzzles(){
+  roll();
+  var set=dailySet(),done=S.pzSolved;
+  var next=set.filter(function(i){return done.indexOf(i)<0})[0];
+  var app=$('#app');
+  app.innerHTML=top(L('Puzzle Challenge','Thử thách thế cờ'))+
+    '<div class="row between"><span class="chip">'+L('Streak','Chuỗi')+' '+S.streak+'</span><span class="chip">'+L('Solved today','Đã giải hôm nay')+' '+done.length+'/10</span><span class="chip">'+L('Hints','Gợi ý')+' '+(S.premium?'∞':hintsLeft())+'</span></div>'+
+    '<div class="dots">'+set.map(function(i,k){return '<i class="'+(done.indexOf(i)>=0?'done':i===next?'now':'')+'"></i>'}).join('')+'</div>'+
+    '<div id="pbox"></div>'+adSlot();
+  bindBack();bindAd();
+  var box=$('#pbox');
+  if(next===undefined){box.innerHTML='<div class="panel"><h3>'+L('All 10 done!','Xong cả 10 thử thách!')+'</h3><p class="muted">'+L('New puzzles arrive tomorrow.','Ngày mai có thử thách mới.')+'</p></div>';return}
+  if(done.length>=pzLimit()){
+    box.innerHTML='<div class="panel"><h3>'+L('Daily free puzzles used','Hết lượt giải miễn phí hôm nay')+'</h3><p class="muted">'+L('Watch an ad for 5 more, or go Premium for all 10 every day.','Xem quảng cáo để mở thêm 5, hoặc dùng Premium để giải đủ 10 mỗi ngày.')+'</p><button class="btn pri" id="ad5">'+L('Watch ad: +5 puzzles','Xem quảng cáo: +5 thử thách')+'</button><button class="btn" id="pm">Premium</button></div>';
+    $('#ad5').onclick=function(){Monet.rewarded(L('+5 puzzles','+5 thử thách'),function(){S.pzBonus+=5;save();puzzles()})};$('#pm').onclick=function(){go('premium')};return}
+  var P=PUZ[next],s=E.fromFEN(P.f),left=P.n,mistakes=0,busy=false,over=false;
+  box.innerHTML='<div class="panel"><div class="row between"><h3>'+(s.t===1?L('White to move','Trắng đi'):L('Black to move','Đen đi'))+'</h3><span class="tag ads">'+L('Mate in ','Chiếu hết trong ')+P.n+'</span></div><div id="bd"></div><div class="status" id="st"></div><div class="row"><button class="btn grow" id="hint">'+L('Hint','Gợi ý')+'</button><button class="btn grow" id="skip">'+L('Skip','Bỏ qua')+'</button></div></div>';
+  var B=makeBoard($('#bd'));B.flip=s.t===-1;B.set(s);
+  var me=s.t;B.mine=function(c){return c===me};
+  function st(t,c){var e=$('#st');e.textContent=t;e.className='status '+(c||'')}
+  st(L('Find the checkmating move','Tìm nước chiếu hết'));
+  B.onMove=async function(m){
+    if(busy||over)return;busy=true;B.locked=true;
+    var ok=await ask({op:'mateMoves',fen:E.toFEN(s),d:2*left-1});
+    if(!ok||ok.indexOf(m)<0){mistakes++;B.sel=-1;B.render();B.shake();st(L('Not the right move. Try again.','Chưa đúng. Thử lại nhé.'),'bad');if(S.streak){S.streak=0;save()}busy=false;B.locked=false;return}
+    E.make(s,m);B.set(s,m);
+    if(E.mated(s)){over=true;solved();return}
+    left--;st(L('Good. Keep going...','Tốt. Tiếp tục...'),'good');
+    await sleep(450);
+    var d=await ask({op:'defense',fen:E.toFEN(s),d:2*left});
+    if(d){E.make(s,d);B.set(s,d)}
+    busy=false;B.locked=false;
+  };
+  function solved(){
+    var gain=Math.max(5,P.n*10-Math.min(mistakes,2)*5);addCoins(gain);S.solved++;if(!mistakes){S.streak++;S.best=Math.max(S.best,S.streak)}
+    S.pzSolved.push(next);save();
+    st(L('Checkmate! +','Chiếu hết! +')+gain+' '+L('coins','xu'),'good');
+    var r=document.createElement('button');r.className='btn pri';r.textContent=L('Next puzzle','Thử thách tiếp');r.onclick=puzzles;$('#skip').replaceWith(r);
+  }
+  $('#hint').onclick=async function(){
+    if(busy||over)return;
+    if(!hintsLeft())return askHintAd();
+    useHint();busy=true;var ok=await ask({op:'mateMoves',fen:E.toFEN(s),d:2*left-1});busy=false;
+    if(ok&&ok.length){B.hints=[ok[0]&63];B.render();st(L('Move the highlighted piece.','Hãy đi quân được tô sáng.'))}
+    $('#hint').textContent=L('Hint','Gợi ý')+' ('+hintsLeft()+')';
+  };
+  $('#skip').onclick=function(){S.pzSolved.push(next);S.streak=0;save();puzzles()};
+}
+
+/* ---------- skins / fantasy ---------- */
+function fantasy(){
+  var app=$('#app');
+  app.innerHTML=top(L('Fantasy Chess','Fantasy Chess'))+'<p class="muted">'+L('Earn coins by playing, then unlock boards and piece themes. Season skins come with the Chess Pass.','Chơi để kiếm xu, rồi mở khóa bàn cờ và quân cờ. Skin mùa giải đi kèm Chess Pass.')+'</p><div class="skins" id="sk"></div><button class="btn pri" id="pl">'+L('Play with this skin','Chơi với skin này')+'</button>';
+  bindBack();
+  function draw(){
+    $('#sk').innerHTML=Object.keys(SK).map(function(id){
+      var k=SK[id],o=owns(id),on=S.skin===id,css=skinCss(id),cells='';
+      for(var i=0;i<8;i++){var r=i>>2,c=i&3,d=(r+c)&1;cells+='<div style="background:'+(d?'var(--sq-d)':'var(--sq-l)')+'">'+(i===1?'<span style="color:var(--pw);text-shadow:0 0 1px var(--po),var(--glow)">'+GF[5]+'</span>':i===6?'<span style="color:var(--pb);text-shadow:0 0 1px var(--pw),var(--glow)">'+GF[2]+'</span>':'')+'</div>'}
+      var btn=on?'<button class="btn sm" disabled>'+L('Equipped','Đang dùng')+'</button>':o?'<button class="btn sm pri" data-e="'+id+'">'+L('Equip','Dùng')+'</button>':k.pass?'<button class="btn sm" data-p="1">'+L('Chess Pass','Chess Pass')+'</button>':'<button class="btn sm" data-b="'+id+'" '+(S.coins<k.p?'':'')+'>'+k.p+' '+L('coins','xu')+'</button>';
+      return '<div class="skin '+(on?'on':'')+'"><div class="mini" style="'+css+'">'+cells+'</div><b>'+k.n[lang==='vi'?1:0]+'</b>'+btn+'</div>';
+    }).join('');
+    $('#sk').querySelectorAll('[data-e]').forEach(function(b){b.onclick=function(){S.skin=b.dataset.e;save();draw()}});
+    $('#sk').querySelectorAll('[data-b]').forEach(function(b){b.onclick=function(){var id=b.dataset.b;if(S.coins<SK[id].p)return toast(L('Not enough coins. Win games or solve puzzles.','Chưa đủ xu. Hãy thắng ván hoặc giải thế cờ.'));S.coins-=SK[id].p;S.owned.push(id);S.skin=id;save();toast(L('Unlocked','Đã mở khóa'));fantasy()}});
+    $('#sk').querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){go('premium')}});
+  }
+  draw();$('#pl').onclick=function(){setup({title:L('New game','Ván mới')})};
+}
+
+/* ---------- arena ---------- */
+function arena(){
+  var app=$('#app');
+  var lad=[['Bot Rook',1650],['Bot Knight',1380],['Bot Pawn',1110],['Bot Bishop',860]].concat([[L('You','Bạn'),S.rating]]).sort(function(a,b){return b[1]-a[1]});
+  app.innerHTML=top(L('Chess Battle Arena','Đấu trường cờ vua'))+
+    '<div class="stats"><div class="stat"><b>'+S.rating+'</b><span>Elo</span></div><div class="stat"><b>'+S.wins+'</b><span>'+L('Wins','Thắng')+'</span></div><div class="stat"><b>'+S.arena+'</b><span>'+L('Arena games','Ván đấu trường')+'</span></div></div>'+
+    '<div class="panel"><h3>'+L('Pick a time control','Chọn thời gian')+'</h3><div class="grid"><button class="btn pri" data-t="180">'+L('Blitz 3 min','Blitz 3 phút')+'</button><button class="btn pri" data-t="300">'+L('Blitz 5 min','Blitz 5 phút')+'</button><button class="btn" data-t="600" style="grid-column:1/-1">'+L('Rapid 10 min','Rapid 10 phút')+'</button></div><p class="muted sm">'+L('Opponent strength follows your rating. Win to climb the ladder.','Đối thủ mạnh dần theo điểm Elo của bạn. Thắng để leo hạng.')+'</p></div>'+
+    '<div class="panel"><h3>'+L('Weekly ladder','Bảng xếp hạng tuần')+'</h3><p class="muted sm">'+L('Sample ladder with bots. Online play needs a server.','Bảng mẫu với bot. Chơi online cần máy chủ.')+'</p><table>'+lad.map(function(r,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(r[0])+'</td><td style="text-align:right;font-variant-numeric:tabular-nums">'+r[1]+'</td></tr>'}).join('')+'</table></div>'+adSlot();
+  bindBack();bindAd();
+  app.querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){
+    var lv=S.rating<1100?1:S.rating<1450?2:3,c=Math.random()<.5?1:-1;
+    startGame({mode:'arena',vs:'ai',level:lv,color:c,clock:+b.dataset.t,inc:0})}});
+}
+
+/* ---------- academy ---------- */
+var LES=[
+ {id:'italian',n:'Italian Game',vi:'Khai cuộc Ý',side:1,mv:'e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6 d2d3 d7d6 e1g1 e8g8 f1e1 a7a6 c4b3',
+  nt:{0:['Takes the centre and opens lines for the queen and bishop.','Chiếm trung tâm và mở đường cho hậu và tượng.'],2:['Develops a knight and attacks the e5 pawn.','Phát triển mã và tấn công tốt e5.'],4:['The Italian bishop eyes f7, Black\'s weakest square.','Tượng "Ý" nhắm vào f7, điểm yếu nhất của Đen.'],6:['Prepares d4 to build a strong pawn centre.','Chuẩn bị d4 để dựng trung tâm tốt vững chắc.'],8:['A calm main line, supports e4 and keeps things solid.','Biến chính chắc chắn, bảo vệ e4.'],10:['Castle early: the king is safe and the rook joins in.','Nhập thành sớm: vua an toàn, xe vào cuộc.'],12:['The rook backs up the e4 pawn.','Xe hỗ trợ tốt e4.'],14:['Keeps the bishop on the a2-g8 diagonal, safe from ...b5.','Giữ tượng trên đường chéo a2-g8, tránh ...b5.']}},
+ {id:'sicilian',n:'Sicilian Defense',vi:'Phòng thủ Sicilia',side:-1,mv:'e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5 d4b3 c8e6',
+  nt:{1:['Fights for d4 from the side and plays for a win.','Tranh d4 từ cánh, chơi để thắng.'],3:['Prepares ...Nf6 without allowing e4-e5.','Chuẩn bị ...Nf6 mà không cho e4-e5.'],5:['Trades a flank pawn for White\'s central pawn.','Đổi tốt cánh lấy tốt trung tâm của Trắng.'],7:['Attacks the e4 pawn at once.','Tấn công ngay tốt e4.'],9:['The Najdorf: stops Nb5 and prepares ...b5.','Najdorf: ngăn Nb5 và chuẩn bị ...b5.'],11:['Kicks the knight and takes space in the centre.','Đuổi mã và chiếm không gian trung tâm.'],13:['Develops the last minor piece to a good square.','Phát triển quân nhẹ cuối cùng ra ô đẹp.']}},
+ {id:'qgd',n:'Queen\'s Gambit Declined',vi:'Gambit Hậu từ chối',side:1,mv:'d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5 f8e7 e2e3 e8g8 g1f3 b8d7 a1c1 c7c6 f1d3 d5c4 d3c4 f6d5',
+  nt:{0:['Controls e5 and opens the queen\'s bishop.','Kiểm soát e5 và mở tượng của hậu.'],2:['The gambit: offers a pawn to pull Black\'s d-pawn away.','Gambit: mời tốt để kéo tốt d của Đen đi.'],3:['Black declines and keeps a solid pawn chain.','Đen từ chối, giữ dây tốt vững.'],4:['More pressure on d5.','Thêm áp lực lên d5.'],6:['Pins the f6 knight against the queen.','Ghim mã f6 vào hậu.'],10:['Natural development, guarding d4 and e5.','Phát triển tự nhiên, giữ d4 và e5.'],12:['The rook takes the open c-file.','Xe chiếm cột c.'],15:['Black takes the pawn, giving up the centre for freedom.','Đen ăn tốt, đổi trung tâm lấy sự tự do.'],17:['Trading pieces eases the cramped position.','Đổi quân giúp thế cờ bớt chật.']}}
+];
+function academy(){
+  var app=$('#app');
+  app.innerHTML=top(L('Chess Academy','Học viện cờ vua'))+'<p class="muted">'+L('Learn openings move by move, then practise them from memory.','Học khai cuộc từng nước, rồi tự luyện lại từ trí nhớ.')+'</p>'+
+    LES.map(function(l,i){return '<button class="card" data-i="'+i+'" style="min-height:0;flex-direction:row;align-items:center;gap:12px"><span class="g" style="--c:var(--accent);font-size:36px">'+GF[1]+'</span><span class="grow"><h3>'+esc(lang==='vi'?l.vi:l.n)+'</h3><small>'+L('You play ','Bạn cầm quân ')+(l.side===1?L('White','Trắng'):L('Black','Đen'))+' · '+Math.ceil(l.mv.split(' ').length/2)+' '+L('moves','nước')+'</small></span>'+(S.lessons.indexOf(l.id)>=0?'<span class="tag free">✓</span>':'')+'</button>'}).join('')+
+    '<div class="panel"><h3>'+L('Learn from mistakes','Học từ sai lầm')+'</h3><p class="muted sm">'+L('After any game against the computer, tap "Review mistakes" to see your biggest errors and better moves.','Sau mỗi ván với máy, bấm "Xem lỗi" để thấy sai lầm lớn nhất và nước tốt hơn.')+'</p></div>'+adSlot();
+  bindBack();bindAd();
+  app.querySelectorAll('[data-i]').forEach(function(b){b.onclick=function(){go('lesson',+b.dataset.i)}});
+}
+function lesson(i){
+  var l=LES[i],mv=l.mv.split(' '),s,B,k=0,practice=false,app=$('#app'),fens=[];
+  app.innerHTML=top(esc(lang==='vi'?l.vi:l.n))+'<div class="seg"><button id="mW" class="on">'+L('Watch','Xem')+'</button><button id="mP">'+L('Practice','Luyện tập')+'</button></div><div id="bd"></div><div class="panel"><div class="status" id="st" style="text-align:left"></div></div><div class="row"><button class="btn grow" id="pv">&#8592;</button><button class="btn pri grow" id="nx">'+L('Next','Tiếp')+' &#8594;</button></div>';
+  bindBack('academy');B=makeBoard($('#bd'));B.flip=l.side===-1;
+  function reset(){s=E.fromFEN(E.START);k=0;B.set(s)}
+  function note(idx){var n=l.nt[idx];return n?n[lang==='vi'?1:0]:''}
+  function say(t,c){var e=$('#st');e.textContent=t;e.className='status '+(c||'');e.style.textAlign='left'}
+  function step(){var m=E.fromUCI(s,mv[k]);var san=E.san(s,m);E.make(s,m);B.set(s,m);var t=note(k);say(san+(t?' — '+t:''));k++}
+  function back(to){reset();while(k<to)step()}
+  function ready(){return k>=mv.length}
+  function autoOpp(){ if(!ready()&&((k%2===0)?1:-1)!==l.side){setTimeout(step,500);setTimeout(promptMe,520)} }
+  function promptMe(){if(practice&&!ready())say(L('Your move. Play the book move.','Đến lượt bạn. Hãy đi nước khai cuộc.'));if(ready()&&practice){say(L('Line complete! ✓','Hoàn thành biến! ✓'),'good');if(S.lessons.indexOf(l.id)<0){S.lessons.push(l.id);addCoins(25);save();toast('+25 '+L('coins','xu'))}}}
+  $('#nx').onclick=function(){if(practice)return;if(!ready())step();else say(L('End of the line.','Hết biến.'))};
+  $('#pv').onclick=function(){if(practice)return;back(Math.max(0,k-1));if(k===0)say('')};
+  function mode(p){practice=p;$('#mW').className=p?'':'on';$('#mP').className=p?'on':'';$('#nx').disabled=$('#pv').disabled=p;reset();B.mine=function(c){return c===l.side};if(p){say(L('Your move. Play the book move.','Đến lượt bạn. Hãy đi nước khai cuộc.'));if(l.side===-1)setTimeout(step,400)}else say(L('Press Next to step through the opening.','Bấm Tiếp để xem từng nước.'))}
+  B.onMove=function(m){
+    if(!practice)return;
+    if(m===E.fromUCI(s,mv[k])){var san=E.san(s,m);E.make(s,m);B.set(s,m);var t=note(k);say('✓ '+san+(t?' — '+t:''),'good');k++;if(ready())return promptMe();setTimeout(function(){step();if(ready())promptMe();else setTimeout(function(){},0)},600)}
+    else{B.sel=-1;B.render();B.shake();say(L('Not the book move. Book: ','Không phải nước sách. Nước đúng: ')+E.san(s,E.fromUCI(s,mv[k])),'bad')}
+  };
+  $('#mW').onclick=function(){mode(false)};$('#mP').onclick=function(){mode(true)};
+  mode(false);
+}
+
+/* ---------- crazy ---------- */
+function crazy(){
+  var app=$('#app');
+  app.innerHTML=top(L('Crazy Chess','Crazy Chess'))+'<p class="muted">'+L('Twists on the classic game.','Những biến thể khác lạ của cờ vua.')+'</p><div class="grid">'+
+   '<button class="card" id="c960"><span class="g" style="--c:#c77dff">'+GF[3]+'</span><h3>Chess 960</h3><small>'+L('Random back rank every game (Fischer Random), with castling.','Hàng cuối ngẫu nhiên mỗi ván (Fischer Random), có nhập thành.')+'</small><span class="tag free">Free</span></button>'+
+   '<button class="card" id="ckh"><span class="g" style="--c:#3fb8a5">'+GF[6]+'</span><h3>King of the Hill</h3><small>'+L('Win by checkmate, or march your king to the centre.','Thắng bằng chiếu hết hoặc đưa vua vào 4 ô trung tâm.')+'</small><span class="tag free">Free</span></button>'+
+   '<button class="card" disabled style="opacity:.55"><span class="g" style="--c:#999">'+GF[4]+'</span><h3>'+L('4-player chess','Cờ 4 người')+'</h3><small>'+L('Needs online play.','Cần chơi online.')+'</small><span class="tag">'+L('Soon','Sắp có')+'</span></button>'+
+   '<button class="card" id="cdq"><span class="g" style="--c:#ff7a9c">'+GF[5]+'</span><h3>'+L('Double Queens','Hai Hậu')+'</h3><small>'+L('Both sides start with a second queen. Fast and tactical.','Mỗi bên có thêm một hậu ngay từ đầu. Nhanh và nhiều chiến thuật.')+'</small><span class="tag free">Free</span></button></div>'+adSlot();
+  bindBack();bindAd();
+  $('#c960').onclick=function(){setup({title:'Chess 960',cfg:{mode:'classic',variant:'960'}})};
+  $('#ckh').onclick=function(){setup({title:'King of the Hill',cfg:{mode:'classic',koth:true}})};
+  $('#cdq').onclick=function(){setup({title:L('Double Queens','Hai Hậu'),cfg:{mode:'classic',variant:'dq',fen:'rnbqkbnr/pppqpppp/8/8/8/8/PPPQPPPP/RNBQKBNR w KQkq - 0 1'}})};
+}
+
+/* ---------- premium / monetization ---------- */
+function premium(){
+  var app=$('#app');
+  function yn(x){return x?'✓':'—'}
+  app.innerHTML=top(L('Plans','Gói dịch vụ'))+
+   '<div class="tbl"><table><tr><th></th><th>Free</th><th>'+L('Ads','Xem QC')+'</th><th>Premium</th><th>Pass</th></tr>'+
+   [[L('Classic, daily puzzles','Classic, puzzle hằng ngày'),1,1,1,1],[L('Extra puzzles & hints','Thêm puzzle & gợi ý'),0,1,1,1],[L('No ads','Không quảng cáo'),0,0,1,0],[L('Expert AI, unlimited hints','AI cao thủ, gợi ý không giới hạn'),0,0,1,0],[L('Season skins & boards','Skin, bàn cờ mùa giải'),0,0,0,1],[L('Season quests','Nhiệm vụ mùa'),0,0,0,1]].map(function(r){return '<tr><td>'+r[0]+'</td><td>'+yn(r[1])+'</td><td>'+yn(r[2])+'</td><td>'+yn(r[3])+'</td><td>'+yn(r[4])+'</td></tr>'}).join('')+'</table></div>'+
+   '<div class="panel"><h3>Premium</h3><p class="muted sm">'+L('No ads, expert AI, unlimited hints and 10 puzzles every day.','Không quảng cáo, AI cao thủ, gợi ý không giới hạn và 10 puzzle mỗi ngày.')+'</p><button class="btn pri" id="bp" '+(S.premium?'disabled':'')+'>'+(S.premium?L('Active','Đang dùng'):L('Try Premium (demo)','Dùng thử Premium (demo)'))+'</button></div>'+
+   '<div class="panel"><h3>Chess Pass</h3><p class="muted sm">'+L('Season skins, boards and quests.','Skin, bàn cờ và nhiệm vụ mùa giải.')+'</p><button class="btn pri" id="bc" '+(S.pass?'disabled':'')+'>'+(S.pass?L('Active','Đang dùng'):L('Try Chess Pass (demo)','Dùng thử Chess Pass (demo)'))+'</button>'+
+   '<div class="lbl">'+L('Season quests','Nhiệm vụ mùa')+'</div><div id="qs"></div></div>'+
+   '<p class="muted sm">'+L('Demo: nothing is charged and no real ads are shown. Connect store billing and an ad network in the Monet module.','Bản demo: không tính phí, không có quảng cáo thật. Hãy nối thanh toán và mạng quảng cáo trong module Monet.')+'</p>'+
+   '<button class="btn ghost sm" id="rs">'+L('Reset demo progress','Đặt lại dữ liệu demo')+'</button>';
+  bindBack();
+  $('#bp').onclick=function(){Monet.buy('premium');premium()};$('#bc').onclick=function(){Monet.buy('pass');premium()};
+  $('#rs').onclick=function(){S=JSON.parse(JSON.stringify(DEF));S.lang=lang;save();go('home')};
+  var Q=[['q1',L('Win 3 games','Thắng 3 ván'),function(){return S.wins},3,40],['q2',L('Solve 10 puzzles','Giải 10 thế cờ'),function(){return S.solved},10,60],['q3',L('Play 2 Arena games','Chơi 2 ván đấu trường'),function(){return S.arena},2,40]];
+  $('#qs').innerHTML=Q.map(function(q){var v=Math.min(q[2](),q[3]),c=S.claimed.indexOf(q[0])>=0;
+    return '<div class="row" style="margin:6px 0"><span class="grow sm">'+q[1]+' <span class="muted">'+v+'/'+q[3]+'</span><div class="bar"><i style="width:'+v/q[3]*100+'%"></i></div></span><button class="btn sm" data-q="'+q[0]+'" '+(c||v<q[3]||!Monet.pass()?'disabled':'')+'>'+(c?'✓':'+'+q[4])+'</button></div>'}).join('');
+  $('#qs').querySelectorAll('[data-q]').forEach(function(b){b.onclick=function(){var q=Q.filter(function(x){return x[0]===b.dataset.q})[0];S.claimed.push(q[0]);addCoins(q[4]);save();premium()}});
+}
+
+/* ---------- home ---------- */
+function home(){
+  var app=$('#app');
+  var cards=[
+   ['classic','♟︎'.replace('♟','♚'),'#f2b134',L('Classic Chess','Classic Chess'),L('Vs computer or a friend. Undo, hints, 3 levels.','Đấu máy hoặc bạn. Đi lại, gợi ý, 3 mức khó.'),'free','Free'],
+   ['puzzles','♜︎','#47c98d',L('Puzzle Challenge','Thử thách thế cờ'),L('Mate in 1, 2 or 3. 10 new puzzles daily.','Chiếu hết trong 1, 2, 3 nước. 10 thế mới mỗi ngày.'),'ads','Free + Ads'],
+   ['fantasy','♞︎','#7dffd6',L('Fantasy Chess','Fantasy Chess'),L('Themed boards and pieces. Unlock skins.','Bàn cờ, quân cờ theo chủ đề. Mở khóa skin.'),'pass','Pass'],
+   ['arena','♝︎','#6aa3ff',L('Battle Arena','Đấu trường'),L('Blitz 3 and 5, Rapid 10. Elo rating.','Blitz 3, 5 phút, Rapid 10. Xếp hạng Elo.'),'free','Free'],
+   ['academy','♛︎','#ef8b6b',L('Chess Academy','Học viện'),L('Learn openings. Review your mistakes.','Học khai cuộc. Xem lại lỗi sai.'),'free','Free'],
+   ['crazy','♘︎','#c77dff',L('Crazy Chess','Crazy Chess'),L('Chess 960 and King of the Hill.','Chess 960 và Vua đồi.'),'free','Free']];
+  cards.forEach(function(c){var n=GATE[c[0]];if(n){var u=unlocked(c[0]);c[5]=u?'free':'ads';c[6]=u?L('Unlocked','Đã mở'):'🔒 '+(S.adp[c[0]]||0)+'/'+n+' '+L('ads','QC')}});
+  app.innerHTML='<div class="top"><div class="logo grow">Heather <b>Chess</b></div><button class="chip" id="lg" aria-label="language">'+(lang==='vi'?'VI':'EN')+'</button><span class="chip">&#9679; '+S.coins+'</span></div>'+
+   '<div class="stats"><div class="stat"><b>'+S.rating+'</b><span>Elo</span></div><div class="stat"><b>'+S.streak+'</b><span>'+L('Win streak','Chuỗi thắng')+'</span></div><div class="stat"><b>'+S.solved+'</b><span>'+L('Puzzles solved','Thế đã giải')+'</span></div></div>'+
+   '<div class="grid">'+cards.map(function(c){return '<button class="card" data-g="'+c[0]+'" style="--c:'+c[2]+'"><span class="g">'+c[1]+'</span><h3>'+c[3]+'</h3><small>'+c[4]+'</small><span class="tag '+c[5]+'">'+c[6]+'</span></button>'}).join('')+'</div>'+
+   '<button class="btn '+(S.premium?'':'pri')+'" id="pm">'+(S.premium?'Premium ✓':L('Go Premium: no ads, expert AI','Lên Premium: không QC, AI cao thủ'))+'</button>'+adSlot();
+  bindAd();
+  $('#pm').onclick=function(){go('premium')};
+  $('#lg').onclick=function(){lang=lang==='vi'?'en':'vi';S.lang=lang;save();home()};
+  app.querySelectorAll('[data-g]').forEach(function(b){b.onclick=function(){var g=b.dataset.g;if(g==='classic')setup({title:L('New game','Ván mới')});else gate(g,function(){go(g)})}});
+}
+var SCREENS={home:home,puzzles:puzzles,fantasy:fantasy,arena:arena,academy:academy,lesson:lesson,crazy:crazy,premium:premium};
+window.__hc={go:go,S:function(){return S},E:E,startGame:startGame};
+home();
+})();
+</script>
+</body>
+</html>
