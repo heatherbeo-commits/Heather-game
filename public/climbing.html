@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Cliff Duel - Heather Games</title>
+<!-- Replace ca-pub-XXXXXXXXXXXXXXXX with your AdSense publisher ID. Remove data-adbreak-test before going live. -->
+<script async data-adbreak-test="on" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:system-ui,sans-serif;color:#fff}
+canvas{display:block;position:fixed;left:0;top:0}
+.ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,14,20,.84);text-align:center;padding:16px;z-index:5}
+.hide{display:none!important}
+h1{margin:0;font-size:36px;letter-spacing:2px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:#2a3544;color:#fff}
+button.lv{width:min(330px,90vw);text-align:left;background:#2a3544}
+button.lv.on,#ctl button.on,.ov>button:not(.lv){background:#f2c200;color:#111}
+button:disabled{opacity:.4}
+#hud{position:fixed;top:0;left:0;right:0;padding:max(8px,env(safe-area-inset-top)) 10px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:2}
+.side{display:flex;flex-direction:column;gap:3px;font-size:13px}.side.r{align-items:flex-end}
+.bar{height:10px;background:#0007;border-radius:6px;overflow:hidden;width:38vw;max-width:190px}
+.bar i{display:block;height:100%;width:100%;background:#4c4}
+#tm{font-size:26px;font-weight:800;text-shadow:0 2px 6px #000}
+#big{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;pointer-events:none;text-shadow:0 4px 12px #000;z-index:3}
+#msg{position:fixed;left:0;right:0;top:24%;text-align:center;font-size:22px;font-weight:800;opacity:0;transition:opacity .25s;pointer-events:none;text-shadow:0 2px 8px #000;z-index:3}
+#ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:6px;justify-content:center;padding:8px 8px max(10px,env(safe-area-inset-bottom));z-index:2}
+#ctl button{flex:1;max-width:110px;padding:14px 4px;font-size:13px;background:#1e2733cc}
+#ctl #rb{background:#2e7d32}
+small{opacity:.8;font-weight:500}
+</style></head><body>
+<div id="hud" class="hide"><div class="side"><b>YOU</b><div class="bar"><i id="sp"></i></div><small id="hp"></small></div><div id="tm">0.0s</div><div class="side r"><b>CAESAR</b><div class="bar"><i id="sa"></i></div><small id="ha"></small></div></div>
+<div id="big"></div><div id="msg"></div>
+<div id="ctl" class="hide"><button data-l="0">L HAND</button><button data-l="1">R HAND</button><button data-l="2">L FOOT</button><button data-l="3">R FOOT</button><button id="rb">REST</button></div>
+<div id="ad" class="ov hide" style="z-index:9;background:#000"><h1>AD</h1><div id="adt"></div><div style="width:min(320px,80vw);height:180px;background:linear-gradient(135deg,#7b2ff7,#f107a3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800">Demo Ad</div><button id="adb"></button></div>
+<div id="menu" class="ov"></div><div id="end" class="ov hide"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const LV=[{name:'Indoor Bouldering',sub:'Gym wall · short & powerful',n:2,drain:.75,ai:1.5,cost:.9,slip:0},
+{name:'Sport Climbing',sub:'Tall wall · rope catches your falls',n:4,drain:1,ai:1.15,cost:1,slip:.01},
+{name:'Outdoor Limestone',sub:'Real rock · tough holds, long route',n:6,drain:1.15,ai:1,cost:1.1,slip:.025}];
+const HC=[.6,1.5,1.7,1];
+const ADS_NEED=3,AD_SECS=5;let best=[0,0,0],ads=[ADS_NEED,0,0];
+try{best=JSON.parse(localStorage.getItem('cd_best')||'[0,0,0]');const a=JSON.parse(localStorage.getItem('cd_ads')||'null');if(a)ads=[ADS_NEED,Math.min(ADS_NEED,+a[1]||0),Math.min(ADS_NEED,+a[2]||0)]}catch(e){}
+function save(){try{localStorage.setItem('cd_best',JSON.stringify(best));localStorage.setItem('cd_ads',JSON.stringify(ads))}catch(e){}}
+const isOpen=i=>ads[i]>=ADS_NEED;
+/* Real ads: define window.showRewardedAd=(done)=>{...call done() when the viewer earned the reward} before this script runs.
+   Without it, a 5s demo ad is shown. */
+function watchAd(i){if(isOpen(i))return go(i);
+const fin=()=>{ads[i]=Math.min(ADS_NEED,ads[i]+1);save();$('ad').classList.add('hide');menu();toast(isOpen(i)?'Level '+(i+1)+' unlocked!':'Ad '+ads[i]+'/'+ADS_NEED)};
+const demo=()=>{const ad=$('ad'),b=$('adb'),t=$('adt');ad.classList.remove('hide');b.disabled=true;let s=AD_SECS;
+t.textContent='Ad for Level '+(i+1)+' · '+(ads[i]+1)+'/'+ADS_NEED;b.textContent='Wait '+s+'s';
+const iv=setInterval(()=>{s--;if(s>0)b.textContent='Wait '+s+'s';else{clearInterval(iv);b.disabled=false;b.textContent='Claim reward';b.onclick=fin}},1000)};
+window.showRewardedAd(fin,demo)}
+/* Google rewarded ad (Ad Placement API / AdSense for Games). Falls back to demo ad if none is available. */
+window.adsbygoogle=window.adsbygoogle||[];
+function adBreak(o){window.adsbygoogle.push(o)}
+try{adBreak({preloadAdBreaks:'on',sound:'on'})}catch(e){}
+window.showRewardedAd=(done,fallback)=>{let ready=false,viewed=false;
+try{adBreak({type:'reward',name:'unlock-level',
+beforeReward:show=>{ready=true;show()},
+adViewed:()=>{viewed=true},
+adDismissed:()=>{toast('Watch the full ad to get the reward')},
+adBreakDone:info=>{if(viewed)done();else if(!ready&&(!info||info.breakStatus!='dismissed'))fallback()}})}catch(e){fallback()}}
+const R=new THREE.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;document.body.prepend(R.domElement);
+const S=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,1,.1,200);
+S.add(new THREE.HemisphereLight(0xffffff,0x778899,.95));
+const light=new THREE.DirectionalLight(0xffffff,.8);light.castShadow=true;light.shadow.mapSize.set(1024,1024);
+Object.assign(light.shadow.camera,{left:-12,right:12,top:12,bottom:-12,near:1,far:60});S.add(light,light.target);
+let li=0,state='menu',time=0,cd=0,P,A,world,sel=0,camY=3.4,camD=10,Q=[],rs=false,winTime=0,tt,lt=0;
+function size(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();camD=Math.max(10,7.8/(2*Math.tan(22.5*Math.PI/180)*cam.aspect))}
+addEventListener('resize',size);size();
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function tex(base,dot,noise){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.fillStyle=base;g.fillRect(0,0,256,256);
+for(let i=0;i<noise;i++){g.fillStyle=`rgba(${Math.random()<.5?'0,0,0':'255,255,255'},${Math.random()*.09})`;g.fillRect(Math.random()*256,Math.random()*256,Math.random()*30+2,Math.random()*40+2)}
+if(dot){g.fillStyle=dot;for(let x=8;x<256;x+=16)for(let y=8;y<256;y+=16){g.beginPath();g.arc(x,y,1.8,0,7);g.fill()}}
+const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+const UP=new THREE.Vector3(0,1,0),_d=new THREE.Vector3(),V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function seg(m,a,b){_d.subVectors(b,a);const l=_d.length()||.001;m.position.copy(a).addScaledVector(_d,.5);m.scale.set(1,l,1);m.quaternion.setFromUnitVectors(UP,_d.divideScalar(l))}
+function ik(r,t,l1,l2,po){const d=t.clone().sub(r);let D=d.length();const mx=l1+l2-.01;if(D>mx){d.multiplyScalar(mx/D);D=mx}D=Math.max(D,.12);
+const u=d.clone().normalize(),a=(l1*l1-l2*l2+D*D)/(2*D),h=Math.sqrt(Math.max(l1*l1-a*a,0)),p=po.clone().addScaledVector(u,-po.dot(u)).normalize();
+return[r.clone().addScaledVector(u,a).addScaledVector(p,h),r.clone().add(d)]}
+function gen(L,r){const h=[],q=[];
+for(let k=0;k<=L.n;k++){const b=k*3,c=(r()-.5)*.5;q.push(h.length);
+h.push({x:c-.3,y:b+.3,t:0,cp:1},{x:c+.3,y:b+.3,t:0,cp:1},{x:c-.28,y:b+1.75,t:0,cp:1},{x:c+.28,y:b+1.75,t:0,cp:1});
+if(k<L.n)for(let y=b+.9;y<b+3.4;y+=.42+r()*.12){const n=1+(r()<.6);for(let j=0;j<n;j++)h.push({x:(r()*2-1)*.95,y:y+(r()-.5)*.2,t:r()*4|0})}}
+h.push({x:0,y:L.n*3+2.4,top:1,t:0});return{h,q}}
+function mkMesh(o,col,rock,r){let g,s;
+if(o.top){g=new THREE.BoxGeometry(1,1,1);s=[.55,.12,.14]}
+else if(rock){g=new THREE.DodecahedronGeometry(1,0);s=[.12+r()*.1,.08+r()*.1,.07+r()*.05]}
+else if(o.t==0){g=new THREE.SphereGeometry(1,12,8);s=[.2,.13,.11]}
+else if(o.t==1){g=new THREE.BoxGeometry(1,1,1);s=[.26,.05,.09]}
+else if(o.t==2){g=new THREE.SphereGeometry(1,12,8);s=[.22,.17,.07]}
+else{g=new THREE.BoxGeometry(1,1,1);s=[.1,.22,.13]}
+const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:col,roughness:rock?1:.45}));m.scale.set(...s);m.castShadow=true;m.rotation.z=o.top?0:(r()-.5)*.9;return m}
+class Cl{constructor(top,shoe,lane,ai){this.lane=lane;this.ai=ai;this.g=new THREE.Group();S.add(this.g);
+const M=c=>new THREE.MeshStandardMaterial({color:c,roughness:.8}),sk=M(0xd9a77a),tp=M(top),pn=M(0x6f776b),sh=M(shoe),hr=M(0x1a1410);
+const mesh=(geo,m)=>{const o=new THREE.Mesh(geo,m);o.castShadow=true;this.g.add(o);return o};
+const cyl=(a,b)=>new THREE.CylinderGeometry(a,b,1,8),sph=r=>new THREE.SphereGeometry(r,10,8);
+this.torso=mesh(new THREE.BoxGeometry(.5,.62,.26),tp);this.hip=mesh(new THREE.BoxGeometry(.36,.2,.24),pn);
+this.head=mesh(sph(.13),sk);this.pony=mesh(sph(.07),hr);
+this.rope=mesh(cyl(.012,.012),M(lane<0?0xff3b30:0x2d8cff));
+this.L=[];[[-1,1],[1,1],[-1,0],[1,0]].forEach(([s,a])=>this.L.push({side:s,arm:!!a,hold:null,tip:V(0,0,0),
+up:mesh(a?cyl(.06,.05):cyl(.095,.07),a?sk:pn),lo:mesh(a?cyl(.05,.04):cyl(.07,.055),a?sk:pn),j:mesh(sph(a?.06:.085),a?sk:pn),
+e:a?mesh(sph(.065),sk):mesh(new THREE.BoxGeometry(.11,.08,.24),sh),a1:a?.48:.55,a2:a?.5:.55,pole:V(s*(a?.7:.5),a?-.6:.15,a?.8:1)}));
+this.C=V(lane,1.2,.46);this.T=V(0,0,0);this.st=100;this.vy=0;this.ft=0;this.fall=false;this.rest=false;this.mk=0;this.seq=0;this.tm=1;this.resting=false}
+root(l){return V(this.C.x+l.side*(l.arm?.25:.12),this.C.y+(l.arm?.25:-.32),this.C.z)}
+hang(l,t){return this.root(l).add(V(l.side*(l.arm?.12:.06)+Math.sin(t*2+l.side)*.03,l.arm?-.75:-.9,l.arm?.15:.2))}
+can(l,h){return!this.fall&&!this.L.some(x=>x.hold===h)&&this.root(l).distanceTo(h.t)<=(l.arm?.98:1.05)&&(l.arm||h.t.y<this.C.y-.15)}
+compT(){let ax=0,an=0,hy=0,hn=0,fy=0,fn=0;
+for(const l of this.L)if(l.hold){const p=l.hold.t;ax+=p.x;an++;if(l.arm){hy+=p.y;hn++}else{fy+=p.y;fn++}}
+if(!hn&&!fn)return false;const a=hn?hy/hn-.8:0,b=fn?fy/fn+1:0,T=this.T;
+T.x=ax/an;T.y=hn&&fn?(a+b)/2:hn?a-.1:b;T.z=.46;return true}
+tryMove(i,h){const l=this.L[i];if(this.fall||l.hold===h)return'';
+if(this.L.some(x=>x.hold===h))return'Hold in use';
+if(this.root(l).distanceTo(h.t)>(l.arm?.98:1.05))return'Too far!';
+if(!l.arm&&h.t.y>=this.C.y-.15)return'Too high for a foot';
+const rest=this.L.filter(x=>x!==l&&x.arr);if(rest.length<2||!rest.some(x=>x.arm))return'Need 2 solid points!';
+if(this.st<4)return'No stamina!';
+l.hold=h;this.st-=2.5*h.cost*LV[li].drain;return null}
+drop(){this.fall=true;this.vy=0;this.ft=0;this.L.forEach(l=>l.hold=null);if(!this.ai)toast(li?'Rope caught you!':'You fell!')}
+respawn(){const k=li?this.mk:0,q=Q[k],idx=[q+2,q+3,q,q+1];
+this.L.forEach((l,i)=>{l.hold=this.holds[idx[i]];l.tip.copy(l.hold.t)});this.fall=false;this.st=Math.max(this.st,40);this.compT();this.C.copy(this.T)}
+upd(dt,t){const Ls=this.L,C=this.C;
+for(const l of Ls)l.arr=!!l.hold&&l.tip.distanceTo(l.hold.t)<.1;
+const cs=Ls.filter(l=>l.arr),hs=cs.filter(l=>l.arm).length,fs=cs.length-hs;
+if(this.fall){this.vy-=24*dt;C.y+=this.vy*dt;C.z+=.5*dt;const ly=li?this.mk*3+.9:1.15;
+if(C.y<=ly){C.y=ly;this.vy=0;this.ft+=dt;if(this.ft>.9)this.respawn()}}
+else if(dt>0){
+if(this.compT())C.lerp(this.T,Math.min(1,7*dt));
+if(this.rest&&cs.length>=3&&hs>=1){const jug=li>0&&cs.some(l=>l.arm&&l.hold.cp);this.st=Math.min(100,this.st+(jug?26:16)*dt)}
+else{let ld=0;for(const l of cs)ld+=l.arm?2.4*l.hold.cost:.4*l.hold.cost;this.st-=ld*(fs>=2?1:fs?1.6:2.6)*LV[li].drain*dt;
+if(!this.ai&&state=='play'&&LV[li].slip&&this.st<35&&Math.random()<dt*LV[li].slip*3){this.drop();return}
+if(!this.ai&&state=='play'&&this.st<20&&!this.warn){this.warn=1;toast('Tired! Hold REST')}if(this.st>40)this.warn=0}
+if(this.st<=0||cs.length<2||hs<1)this.drop();
+else for(const l of cs)if(l.arm){const nk=Math.max(this.mk,Math.min(LV[li].n,Math.max(0,Math.floor((l.hold.ly-1.2)/3))));
+if(nk>this.mk&&li>0&&!this.ai&&state=='play')toast('Checkpoint '+nk+'/'+LV[li].n);this.mk=nk;if(l.hold.top&&state=='play')finish(this)}}
+for(const l of Ls){const d=l.hold?l.hold.t:this.hang(l,t);l.tip.lerp(d,Math.min(1,(l.hold?15:8)*dt))}}
+think(dt){if(this.fall)return;this.rest=false;
+if(this.resting){if(this.st>75)this.resting=false;else{this.rest=true;return}}
+if(this.st<30){this.resting=true;return}
+if(Math.random()<dt*LV[li].slip)return this.drop();
+this.tm-=dt;if(this.tm>0)return;this.tm=LV[li].ai*(.8+Math.random()*.5);
+const i=[1,2,0,3][this.seq++%4],l=this.L[i];
+const c=this.holds.filter(h=>this.can(l,h)&&h.t.y>=(l.hold?l.hold.t.y-.08:0));
+if(!c.length){this.tm=.2;return}
+c.sort((a,b)=>b.t.y-a.t.y);const h=c[Math.random()<.15?Math.min(c.length-1,(Math.random()*3)|0):0];
+if(this.tryMove(i,h)!==null)this.tm=.2}
+draw(t){const C=this.C;
+this.torso.position.copy(C);this.hip.position.set(C.x,C.y-.36,C.z);this.head.position.set(C.x,C.y+.52,C.z+.02);this.pony.position.set(C.x,C.y+.5,C.z+.15);
+for(const l of this.L){const rt=this.root(l),[el,en]=ik(rt,l.tip,l.a1,l.a2,l.pole);
+seg(l.up,rt,el);seg(l.lo,el,en);l.j.position.copy(el);l.e.position.copy(en);if(!l.arm)l.e.position.add(V(0,-.02,.05))}
+this.rope.visible=li>0;if(li>0)seg(this.rope,V(this.lane,LV[li].n*3+3.6,.3),V(C.x,C.y-.3,C.z))}}
+function build(i){li=i;const L=LV[i],out=i==2;
+if(world)S.remove(world);if(P)S.remove(P.g);if(A)S.remove(A.g);
+world=new THREE.Group();S.add(world);
+S.background=new THREE.Color([0x1c2028,0x2a3342,0x8fc8ff][i]);S.fog=out?new THREE.Fog(0x8fc8ff,28,80):null;
+const H=L.n*3+6,tx=[tex('#d8c5a0','rgba(0,0,0,.5)',400),tex('#c9ced6','rgba(0,0,0,.4)',300),tex('#c9b390',null,1500)][i];tx.repeat.set(14/8,H/8);
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(14,H),new THREE.MeshStandardMaterial({map:tx,roughness:.95}));wall.position.set(0,H/2,0);wall.receiveShadow=true;world.add(wall);
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(60,40),new THREE.MeshStandardMaterial({color:[0x2a5db0,0x4a505c,0x4f7d3a][i],roughness:1}));fl.rotation.x=-Math.PI/2;fl.position.z=19;fl.receiveShadow=true;world.add(fl);
+const dv=new THREE.Mesh(new THREE.BoxGeometry(.06,H,.05),new THREE.MeshStandardMaterial({color:0x333333}));dv.position.set(0,H/2,.03);world.add(dv);
+const r0=rng(7+i);
+if(out){for(let k=0;k<10;k++){const x=(k%2?1:-1)*(6.5+r0()*7),z=2+r0()*9,tr=new THREE.Mesh(new THREE.CylinderGeometry(.15,.2,1.6,6),new THREE.MeshStandardMaterial({color:0x5b3b22})),lf=new THREE.Mesh(new THREE.ConeGeometry(1.1,3,8),new THREE.MeshStandardMaterial({color:0x2f6b35}));tr.position.set(x,.8,z);lf.position.set(x,2.8,z);world.add(tr,lf)}
+for(let k=0;k<5;k++){const c=new THREE.Mesh(new THREE.ConeGeometry(10,14,6),new THREE.MeshStandardMaterial({color:0x6a8f78}));c.position.set(-24+k*12,7,-14);world.add(c)}}
+const {h,q}=gen(L,rng(11+i*97));Q=q;
+const cols=[[0xe6ff1a,0x16161a,0x1fa84a],[0xff5a36,0x2d8cff,0xf2c200,0xa44bff,0x22c55e],[0xb89a72,0x9b8466,0xd2b48c,0x7a6a58]][i];
+const lane=(lx,seed)=>{const r=rng(seed);return h.map(o=>{const col=o.top?0xe53935:cols[Math.floor(r()*cols.length)],m=mkMesh(o,col,out&&!o.top,r),p=V(lx+o.x,o.y,.06);m.position.copy(p);world.add(m);
+return{p,t:V(p.x,p.y,.17),cost:(o.top?.5:HC[o.t])*L.cost*(o.cp&&i>0?.7:1),mesh:m,top:!!o.top,cp:!!o.cp,ly:o.y}})};
+if(i>0)for(const lx of[-1.8,1.8])for(let k=0;k<=L.n;k++){
+const sh=new THREE.Mesh(new THREE.BoxGeometry(1.5,.08,.4),new THREE.MeshStandardMaterial({color:out?0x8a7a62:0x555d6b,roughness:.9}));sh.position.set(lx,k*3+.1,.2);sh.receiveShadow=true;world.add(sh);
+if(k>0){const bt=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.12,8),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:.8,roughness:.3}));bt.rotation.x=Math.PI/2;bt.position.set(lx,k*3+1.2,.08);world.add(bt)}}
+if(i>0){const an=new THREE.Mesh(new THREE.TorusGeometry(.12,.03,8,12),new THREE.MeshStandardMaterial({color:0xdddddd,metalness:.8,roughness:.3}));for(const lx of[-1.8,1.8]){const a2=an.clone();a2.position.set(lx,L.n*3+3.6,.1);world.add(a2)}}
+P=new Cl(0xd9a77a,0xe0c030,-1.8,false);A=new Cl(0xd9262c,0x2d8cff,1.8,true);
+P.holds=lane(-1.8,5+i);A.holds=lane(1.8,5+i);P.respawn();A.respawn();camY=3.4}
+function toast(s){const m=$('msg');m.textContent=s;m.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>m.style.opacity=0,900)}
+function ui(){document.querySelectorAll('#ctl [data-l]').forEach(b=>b.classList.toggle('on',+b.dataset.l==sel))}
+function menu(){state='menu';['hud','ctl','end'].forEach(i=>$(i).classList.add('hide'));$('big').textContent='';
+let h='<h1>CLIFF DUEL</h1><div>You vs Caesar · first to the top wins</div>';
+LV.forEach((l,i)=>h+=isOpen(i)?`<button class="lv on" onclick="go(${i})">Level ${i+1}: ${l.name}<br><small>${l.sub}${best[i]?' · Best '+best[i]+'s':''}</small></button>`
+:`<button class="lv" onclick="watchAd(${i})">🔒 Level ${i+1}: ${l.name}<br><small>Watch ad to unlock · ${ads[i]}/${ADS_NEED}</small></button>`);
+h+='<small>Choose a limb (buttons or keys 1-4), then tap a glowing hold within reach.<br>Hold REST (Space) with 3+ points on the wall to recover stamina.</small><small style="margin-top:8px;opacity:.6">© 2026 Heather Games. All Rights Reserved.</small>';
+$('menu').innerHTML=h;$('menu').classList.remove('hide')}
+function go(i){if(!isOpen(i))return;$('menu').classList.add('hide');$('end').classList.add('hide');$('hud').classList.remove('hide');$('ctl').classList.remove('hide');build(i);state='count';cd=3.4;sel=0;ui()}
+function finish(c){if(state!='play')return;state='over';const win=!c.ai;winTime=time;
+setTimeout(()=>showEnd(win),900)}
+function showEnd(win){let h=`<h1>${win?'YOU WIN!':'CAESAR WINS'}</h1><div>Time: ${winTime.toFixed(1)}s</div>`;
+if(win&&(!best[li]||winTime<best[li])){best[li]=+winTime.toFixed(1);h+='<div>New best time!</div>'}else if(best[li])h+=`<div>Best: ${best[li]}s</div>`;
+save();
+h+=`<button onclick="go(${li})">Retry</button>`;if(li<2&&isOpen(li+1))h+=`<button onclick="go(${li+1})">Next level</button>`;h+='<button onclick="menu()">Menu</button>';
+$('end').innerHTML=h;$('end').classList.remove('hide')}
+document.querySelectorAll('#ctl [data-l]').forEach(b=>b.addEventListener('click',()=>{sel=+b.dataset.l;ui()}));
+const rb=$('rb');rb.addEventListener('pointerdown',e=>{e.preventDefault();rs=true});['pointerup','pointerleave','pointercancel'].forEach(n=>rb.addEventListener(n,()=>rs=false));
+addEventListener('keydown',e=>{if(e.key>='1'&&e.key<='4'){sel=+e.key-1;ui()}if(e.code=='Space'||e.key=='r'){rs=true;e.preventDefault()}});
+addEventListener('keyup',e=>{if(e.code=='Space'||e.key=='r')rs=false});
+R.domElement.addEventListener('pointerdown',e=>{if(state!='play')return;let b=null,bd=1e9;const v=V(0,0,0);
+for(const h of P.holds){v.copy(h.t).project(cam);const d=Math.hypot((v.x+1)/2*innerWidth-e.clientX,(1-v.y)/2*innerHeight-e.clientY);if(d<bd){bd=d;b=h}}
+if(b&&bd<60){const m=P.tryMove(sel,b);if(m===null){sel=(sel+1)%4;ui()}else if(m)toast(m)}});
+function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-lt)/1000||0);lt=ts;const t=ts/1000;
+if(state=='count'){cd-=dt;$('big').textContent=cd>0?Math.ceil(cd):'GO!';if(cd<=0){state='play';time=0;setTimeout(()=>{if(state!='count')$('big').textContent=''},700)}}
+const pl=state=='play';if(pl)time+=dt;P.rest=rs;if(pl)A.think(dt);
+for(const c of[P,A]){c.upd(pl?dt:0,t);c.draw(t)}
+if(pl)for(const h of P.holds)h.mesh.material.emissive.setHex(P.can(P.L[sel],h)?0x666633:0);
+else if(state!='over')for(const h of P.holds)h.mesh.material.emissive.setHex(0);
+camY+=(Math.max(3.4,P.C.y+1.3)-camY)*Math.min(1,3*dt);
+cam.position.set(0,camY+1.2,camD);cam.lookAt(0,camY,0);light.position.set(3,camY+8,9);light.target.position.set(0,camY,0);
+if(!$('hud').classList.contains('hide')){
+const top=LV[li].n*3+2.4,pr=c=>Math.round(100*Math.min(1,Math.max(0,...c.L.filter(l=>l.hold).map(l=>l.arm?l.hold.ly:0))/top));
+for(const[c,b,hh]of[[P,'sp','hp'],[A,'sa','ha']]){$(b).style.width=Math.max(0,c.st)+'%';$(b).style.background=`hsl(${c.st*1.2},75%,48%)`;$(hh).textContent=pr(c)+'% up'}
+$('tm').textContent=time.toFixed(1)+'s'}
+R.render(S,cam)}
+build(0);menu();requestAnimationFrame(loop);
+</script></body></html>
