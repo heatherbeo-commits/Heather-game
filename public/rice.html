@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tam's Rice Challenge</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#4a2c0f;background:#f6c36b;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;cursor:pointer}
+.screen{position:fixed;inset:0;display:none}
+.screen.show{display:block}
+#menu{overflow-y:auto;background:linear-gradient(#ffeec4,#f6c36b 60%,#e59a52);padding:18px 14px 40px}
+.wrap{max-width:560px;margin:0 auto}
+h1{margin:6px 0 2px;text-align:center;font-size:30px;letter-spacing:.5px;color:#7a3f0c;text-shadow:0 2px 0 #fff6}
+.tag{text-align:center;margin:0 0 14px;font-size:14px;opacity:.85}
+.card{background:#fffaf0cc;border:2px solid #d9a55f;border-radius:18px;padding:14px 16px;margin:12px 0;box-shadow:0 3px 0 #b9803c55}
+.card h2{margin:0 0 8px;font-size:18px;color:#7a3f0c}
+.card p{margin:6px 0;line-height:1.45;font-size:15px}
+.card ul{margin:6px 0 0;padding-left:20px;line-height:1.5;font-size:15px}
+.lv{display:flex;gap:12px;align-items:center}
+.thumb{flex:0 0 78px;height:78px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:40px;border:2px solid #fff8}
+.lv .info{flex:1;min-width:0}
+.lv h3{margin:0 0 4px;font-size:16px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;margin-bottom:4px}
+.free{background:#d9f5dc;color:#13803a}
+.lock{background:#ffe3cf;color:#c24a0a}
+.open{background:#dbeafe;color:#1d5fb4}
+.lv .d{font-size:13.5px;line-height:1.35;margin:2px 0 6px}
+.stars{font-size:18px;letter-spacing:2px}
+.btn{border:0;border-radius:99px;padding:10px 22px;font-size:16px;font-weight:700;color:#fff;background:#3f9b4a;box-shadow:0 4px 0 #2b6e34}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #2b6e34}
+.btn.alt{background:#e07b1a;box-shadow:0 4px 0 #a85a0c}
+.btn.grey{background:#8a7a68;box-shadow:0 4px 0 #5f5446}
+.btn.sm{padding:6px 14px;font-size:14px}
+.foot{text-align:center;font-size:12px;opacity:.7;margin-top:18px}
+/* game */
+#game{background:#e59a52}
+#cv{position:absolute;inset:0;touch-action:none;display:block}
+#hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 6px;pointer-events:none}
+#hud .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.ib{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:2px solid #fff9;background:#7a3f0ccc;color:#fff;font-size:18px}
+.pill{flex:1;text-align:center;background:#fffaf0e6;border:2px solid #d9a55f;border-radius:99px;padding:7px 4px;font-weight:800;font-size:17px}
+.pill.low{background:#ffd9d2;color:#c0210a;animation:pulse .6s infinite alternate}
+@keyframes pulse{to{transform:scale(1.07)}}
+.goal{margin-top:8px;background:#fffaf0e6;border:2px solid #d9a55f;border-radius:14px;padding:5px 10px 7px;font-size:13.5px;font-weight:700}
+.bar{height:10px;border-radius:9px;background:#e8d6b3;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6cc04a,#f2b705);transition:width .2s}
+#btnSparrow{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 16px);transform:translateX(-50%);width:min(26vw,118px);border:3px solid #fff;border-radius:22px;background:linear-gradient(#5aa9e6,#2f7dc2);color:#fff;padding:6px 4px 7px;box-shadow:0 4px 0 #1d5a92;font-size:12px;line-height:1.15;text-align:center}
+#btnSparrow .bird{display:block;font-size:26px}
+#btnSparrow:disabled{filter:grayscale(1);opacity:.6}
+#btnSparrow:not(:disabled):active{transform:translateX(-50%) translateY(2px)}
+#toast{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);max-width:86%;background:#3b220ce6;color:#fff;border-radius:16px;padding:12px 18px;text-align:center;font-size:16px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.on{opacity:1}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal.show{display:flex}
+.box{background:#fffaf0;border:3px solid #d9a55f;border-radius:22px;padding:22px 20px;max-width:380px;width:100%;text-align:center}
+.box h2{margin:0 0 8px;color:#7a3f0c}
+.box p{margin:6px 0 14px;line-height:1.45}
+.box .btn{margin:4px}
+#resStars{font-size:44px;letter-spacing:6px;margin:6px 0}
+#resStats{font-size:15px;line-height:1.7;margin-bottom:12px}
+.adbar{height:12px;border-radius:9px;background:#e8d6b3;overflow:hidden;margin:10px 0}
+.adbar i{display:block;height:100%;width:0;background:#e07b1a}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen show">
+ <div class="wrap">
+  <h1>🌾 Tam's Rice Challenge</h1>
+  <p class="tag">A Vietnamese folk-tale puzzle · Tấm Cám</p>
+
+  <div class="card">
+   <h2>Story</h2>
+   <p>Once upon a time, Tam was given an impossible task: separate a huge pile of rice and paddy before sunset.</p>
+   <p>The rice grains and paddy grains were mixed together. Just when Tam was about to give up, a flock of little sparrows arrived to help.</p>
+   <p><b>Now it's your turn to help Tam!</b></p>
+  </div>
+
+  <div class="card">
+   <h2>How to play</h2>
+   <ul>
+    <li>Find and collect the <b>white rice grains</b> ⚪ → <b>left basket</b>.</li>
+    <li>Separate them from the <b>yellow paddy grains</b> 🟡 → <b>right basket</b>.</li>
+    <li><b>Drag</b> a grain into its basket, or <b>tap</b> the grain then tap the basket.</li>
+    <li>Complete each challenge before the timer runs out.</li>
+    <li>Earn stars and unlock new levels.</li>
+   </ul>
+  </div>
+
+  <div id="levels"></div>
+
+  <div class="card">
+   <h2>Special features</h2>
+   <ul>
+    <li><b>Golden Rice:</b> bonus points for finding rare golden grains (put them in the rice basket).</li>
+    <li><b>Sparrow Power:</b> birds help collect several grains at once.</li>
+    <li><b>Perfect Sorting:</b> extra star for making no mistakes.</li>
+    <li><b>Time Bonus:</b> finish early to earn additional rewards.</li>
+   </ul>
+  </div>
+  <div class="foot">Heather Games · Inspired by the Vietnamese folk tale Tấm Cám</div>
+ </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+ <canvas id="cv"></canvas>
+ <div id="hud">
+  <div class="row">
+   <button id="btnPause" class="ib" aria-label="Pause">⏸</button>
+   <div class="pill" id="pTime">⏱ 1:30</div>
+   <div class="pill" id="pScore">⭐ 0</div>
+   <button id="btnMute" class="ib" aria-label="Sound">🔊</button>
+  </div>
+  <div class="goal"><div id="goalTxt">Target: 0/30 rice</div><div class="bar"><i id="goalBar"></i></div></div>
+ </div>
+ <button id="btnSparrow"><span class="bird">🐦</span><b>Call the sparrows!</b> <span id="spLeft">×3</span></button>
+ <div id="toast"></div>
+</div>
+
+<!-- MODALS -->
+<div id="pauseModal" class="modal"><div class="box">
+ <h2>Paused</h2><p>Take a breath. The sun is waiting.</p>
+ <button class="btn" id="btnResume">Resume</button>
+ <button class="btn grey" id="btnQuit">Menu</button>
+</div></div>
+
+<div id="resultModal" class="modal"><div class="box">
+ <h2 id="resTitle"></h2>
+ <div id="resStars"></div>
+ <div id="resStats"></div>
+ <p id="resMsg"></p>
+ <button class="btn" id="btnNext">Next level</button>
+ <button class="btn alt" id="btnRetry">Retry</button>
+ <button class="btn grey" id="btnMenu">Menu</button>
+</div></div>
+
+<div id="adModal" class="modal"><div class="box">
+ <h2>📺 Ad (demo)</h2>
+ <p>This is a placeholder for a rewarded video ad.<br>Please wait…</p>
+ <div class="adbar"><i id="adFill"></i></div>
+ <p id="adTxt">3</p>
+</div></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const rand = (a, b) => a + Math.random() * (b - a);
+
+/* ---------- Level config ---------- */
+// goalKind: 'rice' = count only rice (and golden) grains; 'any' = count every correctly sorted grain
+const LEVELS = [
+  { name: 'The Rice Sorting Challenge', emoji: '🌾', bg: 'linear-gradient(135deg,#bfe08a,#7fb23c)',
+    desc: 'Separate rice from paddy. Learn the basic controls and collect 30 rice grains.',
+    goal: 30, goalKind: 'rice', time: 90, count: 16, speed: 26, scatter: 0, ads: 0, sparrows: 2, gold: 0.03 },
+  { name: 'The Sparrow Helpers', emoji: '🐦', bg: 'linear-gradient(135deg,#f3d99a,#d1a655)',
+    desc: 'Sparrows arrive to help, but some birds accidentally scatter the grains. Sort 60 grains before time runs out.',
+    goal: 60, goalKind: 'any', time: 80, count: 24, speed: 42, scatter: 10, ads: 3, sparrows: 3, gold: 0.04 },
+  { name: 'The Impossible Task', emoji: '👩‍🌾', bg: 'linear-gradient(135deg,#f6b26b,#cf6a2a)',
+    desc: 'A much larger pile of mixed rice and paddy. Faster movement, more distractions and a tougher time limit.',
+    goal: 100, goalKind: 'any', time: 100, count: 34, speed: 64, scatter: 7, ads: 5, sparrows: 3, gold: 0.05 }
+];
+
+/* ---------- Save data ---------- */
+let save = { stars: [0, 0, 0], ads: [0, 0, 0] };
+try { const s = JSON.parse(localStorage.getItem('tamRice_v1')); if (s && s.stars && s.ads) save = s; } catch (e) {}
+const persist = () => { try { localStorage.setItem('tamRice_v1', JSON.stringify(save)); } catch (e) {} };
+const unlocked = i => LEVELS[i].ads === 0 || save.ads[i] >= LEVELS[i].ads;
+
+/* ---------- Sound ---------- */
+let ac = null, muted = false;
+function snd(f, d = .12, type = 'sine', v = .15, delay = 0, f2) {
+  if (muted) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .02);
+  } catch (e) {}
+}
+const sGood = () => { snd(660, .1, 'triangle'); snd(990, .12, 'triangle', .15, .08); };
+const sGold = () => [880, 1100, 1320, 1760].forEach((f, i) => snd(f, .15, 'triangle', .15, i * .07));
+const sBad = () => snd(180, .25, 'sawtooth', .12, 0, 90);
+const sBird = () => { snd(1800, .08, 'sine', .1, 0, 2600); snd(2200, .08, 'sine', .1, .1, 3000); };
+const sWin = () => [523, 659, 784, 1047].forEach((f, i) => snd(f, .25, 'triangle', .18, i * .13));
+const sLose = () => [392, 330, 262].forEach((f, i) => snd(f, .3, 'sine', .18, i * .18));
+
+/* ---------- Menu ---------- */
+function renderMenu() {
+  const box = $('levels');
+  box.innerHTML = LEVELS.map((L, i) => {
+    const un = unlocked(i);
+    let badge, btn;
+    if (L.ads === 0) { badge = '<span class="badge free">FREE</span>'; btn = `<button class="btn sm" data-play="${i}">Play</button>`; }
+    else if (un) { badge = '<span class="badge open">UNLOCKED</span>'; btn = `<button class="btn sm" data-play="${i}">Play</button>`; }
+    else {
+      badge = `<span class="badge lock">Unlock with ${L.ads} ads</span>`;
+      btn = `<button class="btn sm alt" data-ad="${i}">▶ Watch ad (${save.ads[i]}/${L.ads})</button>`;
+    }
+    const s = save.stars[i];
+    const stars = '★'.repeat(s) + '☆'.repeat(3 - s);
+    return `<div class="card"><div class="lv">
+      <div class="thumb" style="background:${L.bg}">${L.emoji}</div>
+      <div class="info"><h3>Level ${i + 1} – ${L.name}</h3>${badge}
+      <div class="d">${L.desc}</div>
+      <div class="stars" style="color:#e0a000">${stars}</div>
+      <div style="margin-top:6px">${btn}</div></div></div></div>`;
+  }).join('');
+}
+$('levels').addEventListener('click', e => {
+  const p = e.target.closest('[data-play]'), a = e.target.closest('[data-ad]');
+  if (p) startLevel(+p.dataset.play);
+  if (a) watchAd(+a.dataset.ad);
+});
+
+/* Simulated rewarded ad – replace the body of watchAd with a real ad SDK call if you publish the game */
+function watchAd(i) {
+  const m = $('adModal'); m.classList.add('show');
+  let t = 0; const total = 3;
+  $('adFill').style.width = '0'; $('adTxt').textContent = total;
+  const iv = setInterval(() => {
+    t += .1;
+    $('adFill').style.width = Math.min(100, t / total * 100) + '%';
+    $('adTxt').textContent = Math.max(0, Math.ceil(total - t));
+    if (t >= total) {
+      clearInterval(iv); m.classList.remove('show');
+      save.ads[i]++; persist(); renderMenu();
+    }
+  }, 100);
+}
+
+/* ---------- Game state ---------- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, S = 1, area = { x: 0, y: 0, w: 0, h: 0 };
+const baskets = { rice: { pile: [], shake: 0, count: 0 }, paddy: { pile: [], shake: 0, count: 0 } };
+let G = null, rafId = 0, lastTs = 0, toastTimer = 0;
+
+function resize() {
+  const r = $('game').getBoundingClientRect();
+  if (!r.width) return;
+  W = r.width; H = r.height;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  S = Math.max(.8, Math.min(1.35, Math.min(W, H * .6) / 400));
+  const bh = Math.round(125 * Math.min(1.2, S)), bw = Math.min(W * .36, 230);
+  baskets.rice.x = 10; baskets.paddy.x = W - 10 - bw;
+  for (const k of ['rice', 'paddy']) { baskets[k].y = H - bh - 14; baskets[k].w = bw; baskets[k].h = bh; }
+  const top = $('hud').offsetHeight + 8;
+  area = { x: 10, y: top, w: W - 20, h: baskets.rice.y - top - 18 };
+}
+window.addEventListener('resize', () => { if (G) resize(); });
+
+function newGrain(L) {
+  const r = Math.random();
+  const type = r < L.gold ? 'gold' : (r < .55 ? 'rice' : 'paddy');
+  const a = rand(0, 6.28), sm = rand(.6, 1.3);
+  return {
+    type, x: rand(area.x + 30, area.x + area.w - 30), y: rand(area.y + 30, area.y + area.h - 30),
+    vx: Math.cos(a) * L.speed * sm * S, vy: Math.sin(a) * L.speed * sm * S, sm,
+    rot: rand(0, 6.28), spin: rand(-.6, .6), ph: rand(0, 6), age: 0, fly: null
+  };
+}
+
+function startLevel(i) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+  $('game').classList.add('show');
+  $('resultModal').classList.remove('show'); $('pauseModal').classList.remove('show');
+  const L = LEVELS[i];
+  G = { idx: i, lv: L, grains: [], floats: [], birds: [], leaves: [], time: L.time, score: 0, progress: 0,
+        mistakes: 0, sparrows: L.sparrows, selected: null, drag: null, hover: null, scatterT: L.scatter,
+        t: 0, running: true, paused: false };
+  for (const k of ['rice', 'paddy']) { baskets[k].pile = []; baskets[k].shake = 0; baskets[k].count = 0; }
+  resize();
+  for (let n = 0; n < L.count; n++) G.grains.push(newGrain(L));
+  if (i === 2) for (let n = 0; n < 7; n++) G.leaves.push({ x: rand(0, W), y: rand(0, H), vx: rand(-30, -10), vy: rand(15, 40), rot: rand(0, 6), s: rand(.6, 1.2) });
+  toast(i === 0 ? 'White rice → left basket\nYellow paddy → right basket\n✨ Golden grains → rice basket!' : `Level ${i + 1}: ${L.name}`, 3600);
+  hud();
+  cancelAnimationFrame(rafId); lastTs = performance.now(); rafId = requestAnimationFrame(loop);
+}
+
+function toast(txt, ms = 2200) {
+  const t = $('toast'); t.style.whiteSpace = 'pre-line'; t.textContent = txt; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms);
+}
+
+function hud() {
+  const t = Math.ceil(G.time);
+  const txt = '⏱ ' + Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  if ($('pTime').textContent !== txt) $('pTime').textContent = txt;
+  $('pTime').classList.toggle('low', G.time < 15);
+  $('pScore').textContent = '⭐ ' + G.score;
+  const L = G.lv;
+  $('goalTxt').textContent = `Target: ${G.progress}/${L.goal} ${L.goalKind === 'rice' ? 'rice grains' : 'grains sorted'}`;
+  $('goalBar').style.width = Math.min(100, G.progress / L.goal * 100) + '%';
+  $('spLeft').textContent = '×' + G.sparrows;
+  $('btnSparrow').disabled = G.sparrows <= 0 || G.paused || !G.running;
+}
+
+/* ---------- Sorting logic ---------- */
+function floatTxt(x, y, text, color) { G.floats.push({ x, y, text, color, t: 0 }); }
+
+function sortGrain(g, side, bySparrow) {
+  const isPaddy = g.type === 'paddy';
+  const ok = isPaddy === (side === 'paddy');
+  const b = baskets[side];
+  if (ok) {
+    const pts = g.type === 'gold' ? 50 : (isPaddy ? 8 : 10);
+    G.score += pts;
+    if (G.lv.goalKind === 'any' || !isPaddy) G.progress++;
+    b.count++;
+    b.pile.push({ dx: rand(-.8, .8), dy: rand(-.7, .7), rot: rand(0, 6.28), type: g.type });
+    if (b.pile.length > 40) b.pile.shift();
+    floatTxt(b.x + b.w / 2, b.y - 6, (bySparrow ? '🐦 ' : '') + '+' + pts + (g.type === 'gold' ? ' ✨GOLD!' : ''), g.type === 'gold' ? '#ffd400' : '#fff');
+    g.type === 'gold' ? sGold() : sGood();
+    G.grains.splice(G.grains.indexOf(g), 1);
+    if (G.selected === g) G.selected = null;
+    if (G.drag && G.drag.g === g) G.drag = null;
+    if (G.progress >= G.lv.goal) { hud(); end(true); return; }
+    G.grains.push(newGrain(G.lv));
+  } else {
+    G.mistakes++; G.score = Math.max(0, G.score - 5); b.shake = .4;
+    floatTxt(b.x + b.w / 2, b.y - 6, 'Wrong basket! -5', '#ff7b6b');
+    sBad();
+    const n = newGrain(G.lv); g.x = n.x; g.y = n.y;
+    if (G.selected === g) G.selected = null;
+  }
+  hud();
+}
+
+function callSparrows() {
+  if (!G || !G.running || G.paused || G.sparrows <= 0) return;
+  const free = G.grains.filter(g => !g.fly && g !== G.selected && !(G.drag && G.drag.g === g));
+  if (!free.length) return;
+  G.sparrows--; sBird();
+  free.sort(() => Math.random() - .5);
+  free.slice(0, 5).forEach(g => { g.fly = g.type === 'paddy' ? 'paddy' : 'rice'; });
+  toast('🐦 The sparrows are helping!', 1200);
+  hud();
+}
+$('btnSparrow').addEventListener('click', callSparrows);
+
+function scatter() {
+  toast('🐦 Oops! The birds scattered the grains!', 1800);
+  sBird();
+  G.selected = null; G.drag = null;
+  for (let k = 0; k < 3; k++) G.birds.push({ x: -40 - k * 50, y: area.y + rand(20, area.h - 20), vx: rand(380, 520) });
+  for (const g of G.grains) {
+    if (g.fly) continue;
+    const a = rand(0, 6.28), sp = rand(170, 280) * S;
+    g.vx = Math.cos(a) * sp; g.vy = Math.sin(a) * sp; g.spin = rand(-6, 6);
+  }
+}
+
+function end(win) {
+  if (!G.running) return;
+  G.running = false; G.selected = null; G.drag = null;
+  let stars = 0, bonus = 0;
+  if (win) {
+    stars = 1;
+    if (G.mistakes === 0) { stars++; bonus += 100; }
+    if (G.time / G.lv.time >= .3) stars++;
+    bonus += Math.round(G.time) * 3;
+    G.score += bonus;
+    save.stars[G.idx] = Math.max(save.stars[G.idx], stars); persist();
+    sWin();
+  } else sLose();
+  hud();
+  setTimeout(() => showResult(win, stars, bonus), 700);
+}
+
+function showResult(win, stars, bonus) {
+  $('resTitle').textContent = win ? '🎉 Well done!' : '🌇 The sun has set…';
+  $('resStars').innerHTML = win ? '<span style="color:#e0a000">' + '★'.repeat(stars) + '</span><span style="color:#cbb994">' + '☆'.repeat(3 - stars) + '</span>' : '';
+  $('resStats').innerHTML =
+    `Score: <b>${G.score}</b>${win ? ` (bonus +${bonus})` : ''}<br>` +
+    `Sorted: <b>${G.progress}/${G.lv.goal}</b> · Mistakes: <b>${G.mistakes}</b><br>` +
+    (win ? `Time left: <b>${Math.round(G.time)}s</b><br><small>★ complete · ★ no mistakes · ★ finish with 30%+ time left</small>` : '');
+  $('resMsg').textContent = win ? 'Tam finished before sunset, thanks to you and the sparrows!' : 'Tam needs a little more help. Try again!';
+  const hasNext = win && G.idx < LEVELS.length - 1;
+  $('btnNext').style.display = hasNext ? '' : 'none';
+  $('resultModal').classList.add('show');
+}
+
+/* ---------- Input ---------- */
+const ptr = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+function pick(p) {
+  let best = null, bd = 30 * S;
+  for (let i = G.grains.length - 1; i >= 0; i--) {
+    const g = G.grains[i]; if (g.fly) continue;
+    const d = Math.hypot(g.x - p.x, g.y - p.y);
+    if (d < bd) { bd = d; best = g; }
+  }
+  return best;
+}
+function basketAt(p) {
+  for (const k of ['rice', 'paddy']) {
+    const b = baskets[k];
+    if (p.x >= b.x - 6 && p.x <= b.x + b.w + 6 && p.y >= b.y - 24 && p.y <= b.y + b.h + 10) return k;
+  }
+  return null;
+}
+cv.addEventListener('pointerdown', e => {
+  if (!G || !G.running || G.paused) return;
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume && ac.resume(); } catch (er) {}
+  const p = ptr(e), g = pick(p);
+  if (g) {
+    G.drag = { g, ox: g.x - p.x, oy: g.y - p.y, sx: p.x, sy: p.y, moved: false };
+    cv.setPointerCapture(e.pointerId);
+  } else if (G.selected) {
+    const side = basketAt(p);
+    if (side) sortGrain(G.selected, side); else G.selected = null;
+  }
+});
+cv.addEventListener('pointermove', e => {
+  if (!G || !G.drag) return;
+  const p = ptr(e), d = G.drag;
+  if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) > 8) { d.moved = true; G.selected = d.g; }
+  if (d.moved) {
+    d.g.x = Math.max(10, Math.min(W - 10, p.x + d.ox));
+    d.g.y = Math.max(area.y, Math.min(H - 10, p.y + d.oy));
+    G.hover = basketAt(p);
+  }
+});
+function release(e) {
+  if (!G || !G.drag) return;
+  const d = G.drag, p = ptr(e); G.drag = null; G.hover = null;
+  if (d.moved) {
+    const side = basketAt(p) || basketAt({ x: d.g.x, y: d.g.y });
+    if (side) sortGrain(d.g, side);
+    else { d.g.y = Math.min(d.g.y, area.y + area.h - 16); G.selected = null; }
+  } else {
+    G.selected = (G.selected === d.g) ? null : d.g;
+  }
+}
+cv.addEventListener('pointerup', release);
+cv.addEventListener('pointercancel', () => { if (G) { G.drag = null; G.hover = null; } });
+
+/* ---------- Update ---------- */
+function update(dt) {
+  const L = G.lv;
+  G.t += dt; G.time -= dt;
+  if (G.time <= 0) { G.time = 0; hud(); end(false); return; }
+
+  if (L.scatter) { G.scatterT -= dt; if (G.scatterT <= 0) { G.scatterT = L.scatter; scatter(); } }
+
+  for (const g of G.grains.slice()) {
+    g.age += dt;
+    if (g.fly) {
+      const b = baskets[g.fly], tx = b.x + b.w / 2, ty = b.y + 26;
+      const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy), step = 650 * dt;
+      if (d <= step + 8) { sortGrain(g, g.fly, true); if (!G.running) return; }
+      else { g.x += dx / d * step; g.y += dy / d * step; g.rot += dt * 12; }
+      continue;
+    }
+    if (g === G.selected || (G.drag && G.drag.g === g)) continue;
+    const sp = Math.hypot(g.vx, g.vy) || 1, base = L.speed * g.sm * S;
+    const ns = sp + (base - sp) * Math.min(1, dt * 1.5);
+    g.vx *= ns / sp; g.vy *= ns / sp;
+    g.x += g.vx * dt; g.y += g.vy * dt; g.rot += g.spin * dt;
+    g.spin += (Math.sign(g.spin || 1) * .4 - g.spin) * Math.min(1, dt);
+    const m = 22 * S;
+    if (g.x < area.x + m) { g.x = area.x + m; g.vx = Math.abs(g.vx); }
+    if (g.x > area.x + area.w - m) { g.x = area.x + area.w - m; g.vx = -Math.abs(g.vx); }
+    if (g.y < area.y + m) { g.y = area.y + m; g.vy = Math.abs(g.vy); }
+    if (g.y > area.y + area.h - m) { g.y = area.y + area.h - m; g.vy = -Math.abs(g.vy); }
+  }
+  for (const f of G.floats) { f.t += dt; f.y -= 40 * dt; }
+  G.floats = G.floats.filter(f => f.t < 1.1);
+  for (const b of G.birds) b.x += b.vx * dt;
+  G.birds = G.birds.filter(b => b.x < W + 60);
+  for (const l of G.leaves) {
+    l.x += l.vx * dt; l.y += l.vy * dt; l.rot += dt;
+    if (l.x < -20) l.x = W + 20; if (l.y > H + 20) l.y = -20;
+  }
+  baskets.rice.shake = Math.max(0, baskets.rice.shake - dt);
+  baskets.paddy.shake = Math.max(0, baskets.paddy.shake - dt);
+  hud();
+}
+
+/* ---------- Drawing ---------- */
+function rr(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function drawShape(type, x, y, rot, s, t, ph) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+  if (type === 'gold') {
+    ctx.shadowColor = 'rgba(255,210,50,' + (.6 + .4 * Math.sin(t * 6 + ph)) + ')'; ctx.shadowBlur = 18;
+  } else { ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 2; }
+  ctx.beginPath(); ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
+  if (type === 'rice') {
+    const gr = ctx.createLinearGradient(0, -7, 0, 7); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#efe6d2');
+    ctx.fillStyle = gr; ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#c9bda4'; ctx.lineWidth = 1.2; ctx.stroke();
+  } else if (type === 'paddy') {
+    const gr = ctx.createLinearGradient(0, -7, 0, 7); gr.addColorStop(0, '#f0c443'); gr.addColorStop(1, '#bf8a14');
+    ctx.fillStyle = gr; ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#8a6410'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(10, -3); ctx.moveTo(-10, 3); ctx.lineTo(10, 3);
+    ctx.strokeStyle = 'rgba(120,80,10,.55)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(25, -3); ctx.strokeStyle = '#a67c12'; ctx.lineWidth = 1.4; ctx.stroke();
+  } else {
+    const gr = ctx.createLinearGradient(0, -7, 0, 7); gr.addColorStop(0, '#fff6a8'); gr.addColorStop(1, '#f2b705');
+    ctx.fillStyle = gr; ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(6, -2); ctx.strokeStyle = '#fffbe0'; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBasket(side) {
+  const b = baskets[side], x = b.x, y = b.y, w = b.w, h = b.h;
+  const cx = x + w / 2, ry = 20 * Math.min(1.2, S), rimY = y + ry + 4;
+  const hot = G.drag && G.drag.moved && G.hover === side;
+  const wait = G.selected && !G.drag;
+  ctx.save();
+  if (b.shake > 0) ctx.translate(Math.sin(b.shake * 70) * 6, 0);
+  const cols = side === 'rice' ? ['#d79a55', '#9a5f2a'] : ['#c58a3c', '#7d4d1f'];
+  const gr = ctx.createLinearGradient(0, rimY, 0, y + h); gr.addColorStop(0, cols[0]); gr.addColorStop(1, cols[1]);
+  ctx.beginPath(); ctx.moveTo(x, rimY); ctx.lineTo(x + w, rimY); ctx.lineTo(x + w * .93, y + h);
+  ctx.quadraticCurveTo(cx, y + h + 10, x + w * .07, y + h); ctx.closePath();
+  ctx.fillStyle = gr; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#5b3513'; ctx.stroke();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = 'rgba(60,30,5,.28)'; ctx.lineWidth = 2;
+  for (let i = -h; i < w + h; i += 14) { ctx.beginPath(); ctx.moveTo(x + i, rimY); ctx.lineTo(x + i + h, y + h + 10); ctx.stroke(); }
+  for (let i = w + h; i > -h; i -= 14) { ctx.beginPath(); ctx.moveTo(x + i, rimY); ctx.lineTo(x + i - h, y + h + 10); ctx.stroke(); }
+  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(cx, rimY, w / 2, ry, 0, 0, Math.PI * 2); ctx.fillStyle = '#3f2410'; ctx.fill();
+  for (const p of b.pile) drawShape(p.type, cx + p.dx * w * .38, rimY + p.dy * ry * .55, p.rot, S * .55, G.t, 0);
+  ctx.beginPath(); ctx.ellipse(cx, rimY, w / 2, ry, 0, 0, Math.PI * 2);
+  ctx.lineWidth = 5; ctx.strokeStyle = hot ? '#9dff6a' : (wait ? 'rgba(255,255,255,' + (.6 + .4 * Math.sin(G.t * 8)) + ')' : '#6b4217'); ctx.stroke();
+  if (hot) { ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+  // label plate
+  const pw = w * .72, ph = 28 * Math.min(1.15, S), py = y + h * .56;
+  rr(cx - pw / 2, py, pw, ph, 10); ctx.fillStyle = 'rgba(255,248,225,.94)'; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#6b4217'; ctx.stroke();
+  ctx.fillStyle = '#5a2f0a'; ctx.font = `800 ${14 * Math.min(1.15, S)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText((side === 'rice' ? 'RICE' : 'PADDY') + ' · ' + b.count, cx, py + ph / 2 + 1);
+  ctx.restore();
+}
+
+function draw() {
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#ffd48a'); sky.addColorStop(.45, '#f7a860'); sky.addColorStop(1, '#a8632c');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  const sun = ctx.createRadialGradient(W * .82, 90, 6, W * .82, 90, 90);
+  sun.addColorStop(0, '#fff6c9'); sun.addColorStop(.35, 'rgba(255,230,150,.7)'); sun.addColorStop(1, 'rgba(255,200,120,0)');
+  ctx.fillStyle = sun; ctx.fillRect(0, 0, W, 220);
+
+  drawBasket('rice'); drawBasket('paddy');
+
+  // tray
+  rr(area.x, area.y, area.w, area.h, 22);
+  ctx.fillStyle = '#d9a55f'; ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = 'rgba(120,70,20,.16)'; ctx.lineWidth = 3;
+  for (let i = -area.h; i < area.w; i += 16) { ctx.beginPath(); ctx.moveTo(area.x + i, area.y); ctx.lineTo(area.x + i + area.h, area.y + area.h); ctx.stroke(); }
+  for (let i = area.w + area.h; i > 0; i -= 16) { ctx.beginPath(); ctx.moveTo(area.x + i, area.y); ctx.lineTo(area.x + i - area.h, area.y + area.h); ctx.stroke(); }
+  const inner = ctx.createRadialGradient(area.x + area.w / 2, area.y + area.h / 2, 10, area.x + area.w / 2, area.y + area.h / 2, Math.max(area.w, area.h) * .7);
+  inner.addColorStop(0, 'rgba(255,235,190,.35)'); inner.addColorStop(1, 'rgba(90,50,10,.25)');
+  ctx.fillStyle = inner; ctx.fillRect(area.x, area.y, area.w, area.h);
+  ctx.restore();
+  rr(area.x, area.y, area.w, area.h, 22); ctx.lineWidth = 6; ctx.strokeStyle = '#8b5a2b'; ctx.stroke();
+
+  // grains
+  const dragged = G.drag && G.drag.moved ? G.drag.g : null;
+  for (const g of G.grains) {
+    if (g === dragged) continue;
+    const pop = Math.min(1, g.age * 4);
+    const sel = g === G.selected;
+    drawShape(g.type, g.x, g.y, g.rot, S * (sel ? 1.25 : 1) * pop, G.t, g.ph);
+    if (sel) {
+      ctx.save(); ctx.translate(g.x, g.y); ctx.setLineDash([5, 4]); ctx.lineDashOffset = -G.t * 20;
+      ctx.beginPath(); ctx.arc(0, 0, 26 * S, 0, 7); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+    }
+    if (g.fly) { ctx.font = `${24 * S}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🐦', g.x, g.y - 16 * S); }
+  }
+  if (dragged) {
+    drawShape(dragged.type, dragged.x, dragged.y, dragged.rot, S * 1.4, G.t, dragged.ph);
+  }
+
+  // leaves (distraction)
+  for (const l of G.leaves) {
+    ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.rot); ctx.scale(l.s * S, l.s * S);
+    ctx.beginPath(); ctx.ellipse(0, 0, 11, 4.5, 0, 0, 7); ctx.fillStyle = 'rgba(86,150,60,.8)'; ctx.fill(); ctx.restore();
+  }
+  // birds
+  ctx.font = `${30 * S}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const b of G.birds) ctx.fillText('🐦', b.x, b.y + Math.sin(b.x / 25) * 8);
+
+  // floats
+  ctx.font = `800 ${18 * S}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const f of G.floats) {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.1);
+    ctx.lineWidth = 4; ctx.strokeStyle = '#4a2c0f'; ctx.strokeText(f.text, f.x, f.y);
+    ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function loop(ts) {
+  if (!G || !G.running) { if (G) draw(); return; }
+  const dt = Math.min(.05, (ts - lastTs) / 1000); lastTs = ts;
+  if (!G.paused) update(dt);
+  if (G.running) { draw(); rafId = requestAnimationFrame(loop); } else draw();
+}
+
+/* ---------- Buttons ---------- */
+function setPause(p) {
+  if (!G || !G.running) return;
+  G.paused = p; $('pauseModal').classList.toggle('show', p);
+  if (!p) lastTs = performance.now();
+  hud();
+}
+function toMenu() {
+  if (G) G.running = false;
+  cancelAnimationFrame(rafId);
+  $('pauseModal').classList.remove('show'); $('resultModal').classList.remove('show');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+  $('menu').classList.add('show'); renderMenu();
+}
+$('btnPause').onclick = () => setPause(true);
+$('btnResume').onclick = () => setPause(false);
+$('btnQuit').onclick = toMenu;
+$('btnMenu').onclick = toMenu;
+$('btnRetry').onclick = () => startLevel(G.idx);
+$('btnNext').onclick = () => {
+  const n = G.idx + 1;
+  if (unlocked(n)) startLevel(n);
+  else { toMenu(); }
+};
+$('btnMute').onclick = () => { muted = !muted; $('btnMute').textContent = muted ? '🔇' : '🔊'; };
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.running) setPause(true); });
+
+renderMenu();
+})();
+</script>
+</body>
+</html>
