@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sandcastle Designer – Build Your Dream Castle | Heather Games</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#8fd3ff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none}
+canvas{position:fixed;inset:0;display:block}
+#top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:10px 12px;z-index:5}
+#top h1{flex:1;margin:0;font-size:17px;text-shadow:0 2px 6px rgba(0,0,0,.45)}
+.ib{border:0;border-radius:14px;background:rgba(20,30,50,.6);color:#fff;font-size:20px;padding:8px 12px;backdrop-filter:blur(6px)}
+#back{text-decoration:none}
+#panel{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(18,26,44,.82);backdrop-filter:blur(10px);border-radius:22px 22px 0 0;padding:10px 0 14px}
+.row{display:flex;gap:8px;overflow-x:auto;padding:0 12px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+#tabs{margin-bottom:10px}
+.tab{flex:0 0 auto;border:0;border-radius:14px;padding:8px 12px;background:#2c3a5a;color:#fff;font-size:13px;font-weight:600}
+.tab.on{background:#f5b942;color:#3a2a00}
+#items{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:8px;overflow-x:auto;padding:0 12px;scrollbar-width:none}
+#items::-webkit-scrollbar{display:none}
+.it{width:112px;border:2px solid transparent;border-radius:14px;padding:9px 6px;background:#2c3a5a;color:#fff;font-size:12.5px;font-weight:600;line-height:1.25}
+.it small{display:block;font-weight:500;opacity:.8;margin-top:2px}
+.it.on{border-color:#f5b942;background:#3b4d78}
+.it.lock small{color:#ffd37a}
+#modal,#ad{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+.box{background:#1d2a48;border-radius:20px;padding:22px;width:min(86vw,340px);text-align:center}
+.box h2{margin:0 0 8px;font-size:19px}
+.box p{margin:6px 0 14px;opacity:.9}
+.btn{border:0;border-radius:14px;padding:12px 18px;background:#f5b942;color:#3a2a00;font-weight:700;font-size:15px;margin:4px}
+.btn.g{background:#3b4d78;color:#fff}
+#ad{background:#000;flex-direction:column;font-size:18px}
+#ad b{font-size:54px;color:#f5b942}
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:8px 14px;border-radius:12px;font-size:14px;z-index:6;display:none}
+</style>
+</head>
+<body>
+<div id="top">
+  <a class="ib" id="back" href="/" title="Home">⬅</a>
+  <h1>🏰 Sandcastle Designer</h1>
+  <button class="ib" id="rnd" title="Random">🎲</button>
+  <button class="ib" id="shot" title="Save picture">📷</button>
+</div>
+<div id="toast"></div>
+<div id="panel"><div class="row" id="tabs"></div><div id="items"></div></div>
+<div id="modal"><div class="box"><h2 id="mt"></h2><p id="mp"></p><button class="btn" id="mw">▶ Watch ad</button><button class="btn g" id="mc">Close</button></div></div>
+<div id="ad"><div>Ad playing…</div><b id="adn">5</b><div style="opacity:.6;font-size:13px">(placeholder ad)</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const CATS=[
+{id:'shape',name:'🏰 Castle',items:['Simple Castle','Twin Towers','Ocean Castle','Royal Castle','Round Castle','Star Castle','Shell Castle','Fantasy Castle','Imperial Castle','Grand Kingdom']},
+{id:'colour',name:'🎨 Colour',items:['Golden Sand','White Sand','Pink Sand','Peach Sand','Coral Sand','Purple Sand','Blue Sand','Mint Sand','Rainbow Sand','Diamond Glitter']},
+{id:'garden',name:'🌴 Garden',items:['Simple Garden','Flower Garden','Palm Garden','Shell Garden','Tropical Garden','Royal Garden','Butterfly Garden','Fairy Garden','Crystal Garden','Paradise Garden']},
+{id:'land',name:'🏝 Landscape',items:['Beach','Green Mountain','Golden Desert','Blue Lagoon','Flower Meadow','Snowy Mountain','Frozen Kingdom','Tropical Island','Waterfall Valley','Fantasy Wonderland']},
+{id:'deco',name:'⭐ Decorations',items:['Seashells','Starfish','Flags','Flowers','Sea Pearls','Crystal Gems','Mermaid Statue','Dragon Statue','Golden Crown','Magic Lights']},
+{id:'water',name:'💧 Water',items:['Small Pool','Blue Pond','Mini Fountain','Water Moat','Small Bridge','Royal Fountain','Waterfall','Mermaid Pool','Crystal Lake','Magic Water Garden']}
+];
+const FREE=5, ADS_NEEDED=3;
+let save={sel:{},ads:{},open:{}};
+try{const s=JSON.parse(localStorage.getItem('sandcastle_v1'));if(s)save=Object.assign(save,s)}catch(e){}
+CATS.forEach(c=>{if(save.sel[c.id]==null)save.sel[c.id]=0});
+const persist=()=>{try{localStorage.setItem('sandcastle_v1',JSON.stringify(save))}catch(e){}};
+const isOpen=(c,i)=>i<FREE||save.open[c+':'+i];
+
+/* ---------- three.js setup ---------- */
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,1,.1,200);
+scene.add(new THREE.HemisphereLight(0xffffff,0x998866,.75));
+const sun=new THREE.DirectionalLight(0xfff2d8,.9);
+sun.position.set(8,14,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:40});
+scene.add(sun);
+let theta=.6,phi=1.05,dist=15,auto=true;
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;
+ camera.setViewOffset(w,h,0,h*.14,w,h);camera.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+
+/* ---------- helpers ---------- */
+const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.9},o));
+function add(g,geo,mat,x=0,y=0,z=0,sh=true){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=sh;m.receiveShadow=true;g.add(m);return m}
+const rng=s=>()=>(s=(s*16807)%2147483647)/2147483647;
+let root=null,upd=[],curMat,hue=0;
+const sandMat=()=>{
+ const c=curMat;
+ if(c.rainbow){hue=(hue+.09)%1;return M(new THREE.Color().setHSL(hue,.65,.68))}
+ return c.mat};
+function scatter(g,n,r0,r1,seed,fn){const r=rng(seed);for(let i=0;i<n;i++){const a=r()*6.283,d=r0+r()*(r1-r0);fn(Math.cos(a)*d,Math.sin(a)*d,r,i)}}
+
+/* ---------- castle ---------- */
+const SH=[
+{n:0,keep:[1.3,2.6,'flat']},
+{n:2,ring:2,tr:.75,th:3.2,roof:'cone',wall:1},
+{n:4,ring:2.3,tr:.6,th:2.4,roof:'dome',wall:1,keep:[1.1,2.2,'cone']},
+{n:4,ring:2.5,tr:.7,th:3,roof:'cone',wall:1,keep:[1.3,3.8,'cone']},
+{n:6,ring:2.6,tr:.55,th:2,roof:'flat',wall:1,keep:[1.4,2.6,'dome']},
+{n:5,ring:2.8,tr:.45,th:3.2,roof:'cone',wall:1,keep:[1,3.4,'cone']},
+{n:8,ring:2.6,tr:.4,th:1.8,roof:'dome',wall:1,keep:[1.3,2.4,'dome']},
+{n:6,ring:2.5,tr:.45,th:'var',roof:'cone',keep:[.9,4.8,'cone']},
+{n:4,ring:3,tr:.85,th:3.4,roof:'flat',wall:1,keep:[1.6,3,'flat']},
+{n:8,ring:3.2,tr:.5,th:2.6,roof:'cone',wall:1,keep:[1.1,5.2,'cone'],inner:4}
+];
+function roofTop(g,x,z,r,h,type,tops){
+ let y=h;
+ if(type==='cone'){add(g,new THREE.ConeGeometry(r*1.3,r*2.4,20),M(0xc0504a,{roughness:.7}),x,h+r*1.2,z);y=h+r*2.4}
+ else if(type==='dome'){add(g,new THREE.SphereGeometry(r*1.05,18,10,0,6.283,0,1.571),sandMat(),x,h,z);y=h+r}
+ else{for(let k=0;k<8;k++){const a=k/8*6.283;add(g,new THREE.BoxGeometry(r*.35,r*.35,r*.35),sandMat(),x+Math.cos(a)*r*.9,h+r*.15,z+Math.sin(a)*r*.9)}y=h+r*.4}
+ tops.push([x,y,z]);
+}
+function tower(g,x,z,r,h,roof,tops){
+ add(g,new THREE.CylinderGeometry(r*.92,r*1.08,h,20),sandMat(),x,h/2,z);
+ add(g,new THREE.BoxGeometry(r*.3,r*.5,r*.15),M(0x3a2a1a),x*(1+r*.25/Math.max(Math.hypot(x,z),.01)),h*.65,z*(1+r*.25/Math.max(Math.hypot(x,z),.01)));
+ roofTop(g,x,z,r,h,roof,tops);
+}
+function buildCastle(i){
+ const c=SH[i],g=new THREE.Group(),tops=[];let keepTop=null;
+ const wh=c.th==='var'?1.6:(c.th||2)*.55;
+ if(c.n){
+  const pos=[];
+  for(let k=0;k<c.n;k++){const a=k/c.n*6.283+(c.n===4?.785:0);pos.push([Math.cos(a)*c.ring,Math.sin(a)*c.ring])}
+  pos.forEach((p,k)=>tower(g,p[0],p[1],c.tr,c.th==='var'?2+(k%3)*.9:c.th,c.roof,tops));
+  if(c.wall){const m=c.n===2?1:c.n;for(let k=0;k<m;k++){const a=pos[k],b=pos[(k+1)%c.n],L=Math.hypot(b[0]-a[0],b[1]-a[1]);
+   const w=add(g,new THREE.BoxGeometry(L,wh,.35),sandMat(),(a[0]+b[0])/2,wh/2,(a[1]+b[1])/2);w.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);
+   for(let q=0;q<Math.floor(L/.5);q++){const t=(q+.5)/Math.floor(L/.5);const m2=add(g,new THREE.BoxGeometry(.22,.22,.36),sandMat(),a[0]+(b[0]-a[0])*t,wh+.1,a[1]+(b[1]-a[1])*t);m2.rotation.y=w.rotation.y}}}
+ }
+ if(c.inner){for(let k=0;k<c.inner;k++){const a=k/c.inner*6.283+.785;tower(g,Math.cos(a)*1.9,Math.sin(a)*1.9,.45,3.6,'cone',tops)}}
+ if(c.keep){const[r,h,t]=c.keep;add(g,new THREE.CylinderGeometry(r*.9,r*1.05,h,22),sandMat(),0,h/2,0);
+  const tmp=[];roofTop(g,0,0,r,h,t,tmp);keepTop=tmp[0];
+  add(g,new THREE.BoxGeometry(.6,1,.15),M(0x3a2a1a),0,.5,r*1.0);
+  for(let k=1;k<h/1.3;k++)add(g,new THREE.BoxGeometry(.22,.4,.1),M(0x3a2a1a),0,k*1.1+.4,r);}
+ g.userData={tops,keepTop};
+ return g;
+}
+
+/* ---------- garden ---------- */
+const GR=[5.4,7];
+const grass=()=>M(0x3f9a3a),fcols=[0xff5a7a,0xffd54a,0xffffff,0xc77dff,0xff9a3c];
+function tuft(g,x,z){for(let k=0;k<3;k++)add(g,new THREE.ConeGeometry(.08,.5,5),grass(),x+k*.07,.25,z,false)}
+function flower(g,x,z,r){add(g,new THREE.CylinderGeometry(.03,.03,.45,5),grass(),x,.22,z,false);add(g,new THREE.SphereGeometry(.15,8,8),M(fcols[Math.floor(r()*5)]),x,.5,z,false)}
+function palm(g,x,z,r){const h=1.6+r();const t=add(g,new THREE.CylinderGeometry(.09,.14,h,7),M(0x8a5a2b),x,h/2,z);
+ for(let k=0;k<6;k++){const a=k/6*6.283;const l=add(g,new THREE.ConeGeometry(.16,1.1,4),grass(),x+Math.cos(a)*.45,h+.05,z+Math.sin(a)*.45);l.rotation.set(Math.sin(a)*1.2,0,-Math.cos(a)*1.2)}}
+function shell(g,x,z,r){const s=add(g,new THREE.SphereGeometry(.22,10,8),M(0xffc9dc),x,.1,z,false);s.scale.set(1,.55,.8);s.rotation.y=r()*6}
+function hedge(g,x,z,r,i){if(i%2)add(g,new THREE.SphereGeometry(.42,12,10),grass(),x,.6,z);else add(g,new THREE.BoxGeometry(.9,.6,.4),M(0x2f7f35),x,.3,z)}
+function mush(g,x,z,r){add(g,new THREE.CylinderGeometry(.06,.08,.3,6),M(0xfff0d8),x,.15,z,false);add(g,new THREE.SphereGeometry(.22,10,6,0,6.283,0,1.571),M(0xff6a9a,{emissive:0x551133}),x,.3,z,false)}
+function crystal(g,x,z,r){const m=add(g,new THREE.OctahedronGeometry(.3+r()*.25),M(new THREE.Color().setHSL(.5+r()*.4,.8,.65),{emissive:0x113355,roughness:.2,transparent:true,opacity:.9}),x,.45,z);m.scale.y=1.8}
+function buildGarden(i){
+ const g=new THREE.Group(),S=i+11;
+ const F={
+ 0:()=>scatter(g,30,GR[0],GR[1],S,(x,z)=>tuft(g,x,z)),
+ 1:()=>scatter(g,26,GR[0],GR[1],S,(x,z,r)=>flower(g,x,z,r)),
+ 2:()=>scatter(g,7,GR[0],GR[1],S,(x,z,r)=>palm(g,x,z,r)),
+ 3:()=>scatter(g,22,GR[0],GR[1],S,(x,z,r)=>shell(g,x,z,r)),
+ 4:()=>{scatter(g,5,GR[0],GR[1],S,(x,z,r)=>palm(g,x,z,r));scatter(g,14,GR[0],GR[1],S+3,(x,z,r)=>flower(g,x,z,r))},
+ 5:()=>scatter(g,16,GR[0],GR[1],S,(x,z,r,k)=>hedge(g,x,z,r,k)),
+ 6:()=>{scatter(g,16,GR[0],GR[1],S,(x,z,r)=>flower(g,x,z,r));
+   for(let k=0;k<6;k++){const w=new THREE.Mesh(new THREE.PlaneGeometry(.35,.25),new THREE.MeshBasicMaterial({color:fcols[k%5],side:2}));g.add(w);
+    upd.push(t=>{const a=t*.5+k*1.1,R=4.5+Math.sin(k)*1;w.position.set(Math.cos(a)*R,1.4+Math.sin(t*2+k)*.4,Math.sin(a)*R);w.rotation.set(Math.sin(t*14+k)*.9,a,0)})}},
+ 7:()=>{scatter(g,16,GR[0],GR[1],S,(x,z,r)=>mush(g,x,z,r));
+   scatter(g,3,GR[0],GR[1],S+5,(x,z)=>{const l=new THREE.PointLight(0xff7ac8,.6,4);l.position.set(x,.6,z);g.add(l)})},
+ 8:()=>scatter(g,12,GR[0],GR[1],S,(x,z,r)=>crystal(g,x,z,r)),
+ 9:()=>{scatter(g,4,GR[0],GR[1],S,(x,z,r)=>palm(g,x,z,r));scatter(g,10,GR[0],GR[1],S+1,(x,z,r)=>flower(g,x,z,r));
+   scatter(g,5,GR[0],GR[1],S+2,(x,z,r)=>crystal(g,x,z,r));scatter(g,10,GR[0],GR[1],S+3,(x,z,r)=>shell(g,x,z,r))}
+ };F[i]();return g;
+}
+
+/* ---------- landscape ---------- */
+const LAND=[
+{sky:0x8fd3ff,gr:0x35b6d6,ex:[]},
+{sky:0xa6dcff,gr:0x5aa84a,ex:['mtn']},
+{sky:0xffd9a0,gr:0xe9c07a,ex:['dune']},
+{sky:0x7fd6e6,gr:0x14c0c4,ex:['rock']},
+{sky:0xbfe6ff,gr:0x77c85a,ex:['meadow']},
+{sky:0xcfe3f5,gr:0xf2f6fa,ex:['mtn','snow']},
+{sky:0xaed8f2,gr:0xc9ecff,ex:['ice']},
+{sky:0x8fe0ff,gr:0x2fb9d8,ex:['isles']},
+{sky:0xa9e0c0,gr:0x3f9a5a,ex:['mtn','fall']},
+{sky:0x4a3a8a,gr:0x7a58b8,ex:['rainbow','orbs']}
+];
+function buildLand(i){
+ const L=LAND[i],g=new THREE.Group();
+ scene.background=new THREE.Color(L.sky);scene.fog=new THREE.Fog(L.sky,40,95);
+ const gr=add(g,new THREE.CircleGeometry(90,48),M(L.gr,{roughness:.6}),0,-.05,0,false);gr.rotation.x=-1.571;
+ const isl=add(g,new THREE.CylinderGeometry(7.6,8.2,.5,48),curMat.rainbow?M(0xf0d9a0):curMat.mat,0,-.25,0);
+ const r=rng(i+3),has=k=>L.ex.includes(k);
+ if(has('mtn'))for(let k=0;k<9;k++){const a=-1.2-k*.55+.3,d=28+r()*8,h=7+r()*7,w=4+r()*4;
+  add(g,new THREE.ConeGeometry(w,h,7),M(has('snow')?0x9aa8b8:0x3f7f4a),Math.cos(a)*d,h/2,Math.sin(a)*d,false);
+  if(has('snow'))add(g,new THREE.ConeGeometry(w*.45,h*.38,7),M(0xffffff),Math.cos(a)*d,h*.81,Math.sin(a)*d,false)}
+ if(has('dune'))for(let k=0;k<8;k++){const a=k*.8,d=24+r()*8;const s=add(g,new THREE.SphereGeometry(1,16,10),M(0xd9a85a),Math.cos(a)*d,0,Math.sin(a)*d,false);s.scale.set(8+r()*4,2+r()*2,5)}
+ if(has('rock'))for(let k=0;k<7;k++){const a=k*.9,d=20+r()*6;const s=add(g,new THREE.IcosahedronGeometry(3+r()*2,0),M(0x7a8590),Math.cos(a)*d,1.5,Math.sin(a)*d,false)}
+ if(has('meadow'))for(let k=0;k<110;k++){const a=r()*6.283,d=9+r()*30;add(g,new THREE.SphereGeometry(.15,6,6),M(fcols[k%5]),Math.cos(a)*d,.1,Math.sin(a)*d,false)}
+ if(has('ice'))for(let k=0;k<16;k++){const a=r()*6.283,d=11+r()*18,h=2+r()*4;add(g,new THREE.ConeGeometry(.9+r(),h,5),M(0x9ad8ff,{transparent:true,opacity:.85,roughness:.15}),Math.cos(a)*d,h/2,Math.sin(a)*d,false)}
+ if(has('isles'))for(let k=0;k<4;k++){const a=k*1.6+.4,d=17+r()*8,x=Math.cos(a)*d,z=Math.sin(a)*d;add(g,new THREE.CylinderGeometry(2,2.4,.3,16),M(0xf0d9a0),x,0,z,false);palm(g,x,z,r)}
+ if(has('fall')){add(g,new THREE.BoxGeometry(2.2,9,.5),M(0xcff3ff,{transparent:true,opacity:.85}),-8,4.5,-25,false)}
+ if(has('rainbow'))for(let k=0;k<6;k++){const t=add(g,new THREE.TorusGeometry(22-k*.9,.45,8,48,3.14),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(k/7,.9,.6)}),0,-1,-24,false)}
+ if(has('orbs'))for(let k=0;k<30;k++){const a=r()*6.283,d=9+r()*18,o=add(g,new THREE.SphereGeometry(.18,8,8),new THREE.MeshBasicMaterial({color:k%2?0xff8ae0:0x8af0ff}),Math.cos(a)*d,1+r()*3,Math.sin(a)*d,false);
+  upd.push(t=>{o.position.y+=Math.sin(t*2+k)*.004})}
+ sun.color.set(i===9?0xd8b8ff:0xfff2d8);
+ return g;
+}
+
+/* ---------- decorations ---------- */
+function mermaid(g,x,z,s=1){const m=sandMat(),h=new THREE.Group();h.position.set(x,0,z);h.scale.setScalar(s);g.add(h);
+ add(h,new THREE.ConeGeometry(.35,1.3,12),m,0,.95,0);add(h,new THREE.SphereGeometry(.26,12,12),m,0,1.75,0);
+ add(h,new THREE.SphereGeometry(.3,10,8,0,6.283,0,1.571),M(0x6a4a2a),0,1.78,-.04);
+ add(h,new THREE.ConeGeometry(.3,.8,8),m,0,.3,.2).rotation.x=-.5;
+ [-.3,.3].forEach(d=>add(h,new THREE.ConeGeometry(.22,.5,4),m,d,.1,.5).rotation.set(1.57,0,d*2));
+ add(h,new THREE.BoxGeometry(1,.3,.8),m,0,.15,0)}
+function buildDeco(i,castle){
+ const g=new THREE.Group(),{tops,keepTop}=castle.userData,R=[4.1,5.2];
+ const F={
+ 0:()=>scatter(g,16,R[0],R[1],5,(x,z,r)=>shell(g,x,z,r)),
+ 1:()=>{const sh=new THREE.Shape();for(let k=0;k<10;k++){const a=k/10*6.283,d=k%2?.18:.5;k?sh.lineTo(Math.cos(a)*d,Math.sin(a)*d):sh.moveTo(d,0)}
+   const geo=new THREE.ExtrudeGeometry(sh,{depth:.08,bevelEnabled:false});
+   scatter(g,9,R[0],R[1],6,(x,z,r)=>{const m=add(g,geo,M(0xff8a3c),x,.05,z,false);m.rotation.x=-1.571;m.rotation.z=r()*6})},
+ 2:()=>tops.forEach((t,k)=>{add(g,new THREE.CylinderGeometry(.025,.025,.9,5),M(0xdddddd),t[0],t[1]+.45,t[2],false);
+   const f=add(g,new THREE.BoxGeometry(.55,.32,.02),M([0xe53935,0x1e88e5,0xfdd835][k%3]),t[0]+.3,t[1]+.75,t[2],false);
+   upd.push(tm=>{f.rotation.y=Math.sin(tm*4+k)*.25})}),
+ 3:()=>scatter(g,20,R[0],R[1],7,(x,z,r)=>flower(g,x,z,r)),
+ 4:()=>scatter(g,12,R[0],R[1],8,(x,z)=>add(g,new THREE.SphereGeometry(.2,14,12),M(0xffffff,{metalness:.6,roughness:.2,emissive:0x222222}),x,.2,z,false)),
+ 5:()=>{scatter(g,10,R[0],R[1],9,(x,z,r)=>{const m=add(g,new THREE.OctahedronGeometry(.28),M(new THREE.Color().setHSL(r(),.8,.6),{emissive:0x222244,roughness:.15}),x,.5,z);upd.push(t=>{m.rotation.y=t})})},
+ 6:()=>mermaid(g,4.6,2.4,1),
+ 7:()=>{const m=sandMat();for(let k=0;k<14;k++){const a=-.6+k*.22,rr=4.5,s=.34-k*.012;
+   add(g,new THREE.SphereGeometry(s,12,10),m,Math.cos(a)*rr,.35+Math.sin(k*.6)*.2+(k>10?.5:0),Math.sin(a)*rr+4*0+ -0)}
+   const hd=add(g,new THREE.SphereGeometry(.4,12,10),m,Math.cos(-.9)*4.5,.8,Math.sin(-.9)*4.5);
+   [-.18,.18].forEach(d=>add(g,new THREE.ConeGeometry(.08,.35,5),M(0x7a5a3a),hd.position.x+d,1.2,hd.position.z));
+   [-.15,.15].forEach(d=>add(g,new THREE.SphereGeometry(.07,6,6),new THREE.MeshBasicMaterial({color:0xff2200}),hd.position.x+d,.9,hd.position.z+.35))},
+ 8:()=>{const p=keepTop||tops[0]||[0,3,0];const gold=M(0xffc929,{metalness:.8,roughness:.25});
+   add(g,new THREE.TorusGeometry(.5,.08,8,20),gold,p[0],p[1]+.1,p[2]).rotation.x=1.571;
+   for(let k=0;k<5;k++){const a=k/5*6.283;add(g,new THREE.ConeGeometry(.1,.4,5),gold,p[0]+Math.cos(a)*.5,p[1]+.35,p[2]+Math.sin(a)*.5)}},
+ 9:()=>{tops.forEach((t,k)=>{const L=new THREE.PointLight(0xffd27a,.5,5);L.position.set(t[0],t[1]-.5,t[2]);g.add(L);
+     const b=add(g,new THREE.SphereGeometry(.12,8,8),new THREE.MeshBasicMaterial({color:0xffe08a}),t[0],t[1]+.1,t[2],false);upd.push(tm=>{L.intensity=.4+Math.sin(tm*5+k)*.2;b.scale.setScalar(1+Math.sin(tm*5+k)*.2)})});
+   scatter(g,16,R[0]-.4,R[1],10,(x,z,r,k)=>{const b=add(g,new THREE.SphereGeometry(.1,8,8),new THREE.MeshBasicMaterial({color:0xffe08a}),x,.4,z,false);upd.push(tm=>{b.position.y=.7+Math.sin(tm*2+k)*.3})})}
+ };F[i]();return g;
+}
+
+/* ---------- water ---------- */
+const WC=[0x3ec6e8,0x2f8fe0,0x4fd6ee,0x38b6e6,0x4fc3f7,0x6fe0ff,0x45c5ee,0x4fd0f0,0x80f0ff,0x5fd0ff];
+function pool(g,x,z,r,col,opa=.85){const w=add(g,new THREE.CylinderGeometry(r,r,.14,28),new THREE.MeshStandardMaterial({color:col,roughness:.1,transparent:true,opacity:opa}),x,.08,z,false);
+ const rim=add(g,new THREE.TorusGeometry(r,.14,8,28),sandMat(),x,.1,z);rim.rotation.x=1.571;return w}
+function jet(g,x,y,z,n,h){const p=new Float32Array(n*3),v=[],r=rng(n+7);for(let i=0;i<n;i++)v.push({a:r()*6.283,s:.3+r()*.5,t:r()});
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(p,3));
+ const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0xd8f4ff,size:.11}));pts.frustumCulled=false;g.add(pts);
+ upd.push(t=>{for(let i=0;i<n;i++){const q=(t*.7+v[i].t)%1,d=v[i].s*q*1.3;p[i*3]=x+Math.cos(v[i].a)*d;p[i*3+1]=y+h*4*q*(1-q)*(.6+v[i].s);p[i*3+2]=z+Math.sin(v[i].a)*d}geo.attributes.position.needsUpdate=true})}
+function tiers(g,x,z,n){for(let k=0;k<n;k++)add(g,new THREE.CylinderGeometry(.7-k*.2,.8-k*.2,.3,18),sandMat(),x,.3+k*.3,z)}
+function buildWater(i){
+ const g=new THREE.Group(),c=WC[i],Z=4.7;
+ const F={
+ 0:()=>pool(g,0,Z,1.2,c),
+ 1:()=>pool(g,0,Z+.2,1.7,c),
+ 2:()=>{pool(g,0,Z,1.4,c);tiers(g,0,Z,2);jet(g,0,1,Z,40,1.2)},
+ 3:()=>{const m=add(g,new THREE.RingGeometry(3.9,4.8,48),new THREE.MeshStandardMaterial({color:c,roughness:.1,transparent:true,opacity:.85,side:2}),0,.06,0,false);m.rotation.x=-1.571;
+    add(g,new THREE.BoxGeometry(1,.16,1.2),sandMat(),0,.16,4.35)},
+ 4:()=>{pool(g,0,Z,1.9,c);const b=add(g,new THREE.BoxGeometry(.9,.15,3.4),sandMat(),0,.38,Z);
+    [-1,1].forEach(d=>add(g,new THREE.BoxGeometry(.1,.3,3.4),sandMat(),d*.42,.55,Z))},
+ 5:()=>{pool(g,0,Z+.3,1.9,c);tiers(g,0,Z+.3,3);jet(g,0,1.5,Z+.3,70,2)},
+ 6:()=>{const m=sandMat();add(g,new THREE.ConeGeometry(1.8,4.2,8),m,-4.8,2.1,-4.2);
+    const w=add(g,new THREE.BoxGeometry(.6,3.8,.1),new THREE.MeshStandardMaterial({color:0xaee8ff,transparent:true,opacity:.8}),-4.8,2,-2.8,false);w.rotation.x=.3;
+    pool(g,-4.8,-1.9,1.2,c);jet(g,-4.8,.1,-2.1,30,.5)},
+ 7:()=>{pool(g,0,Z,1.7,c);mermaid(g,0,Z,.8);jet(g,0,1.2,Z,20,.6)},
+ 8:()=>{pool(g,0,Z+.2,2.1,c,.7);scatter(g,7,.2,1.6,3,(x,z,r)=>{const m=add(g,new THREE.OctahedronGeometry(.3),M(0xb8f4ff,{emissive:0x226677,roughness:.1}),x,.4,z+Z+.2);m.scale.y=2})},
+ 9:()=>{pool(g,-1.6,Z,1.1,c);pool(g,1.6,Z,1.1,0x7fe8ff);pool(g,0,Z+1.2,.9,0xa9a0ff);jet(g,-1.6,.8,Z,25,1);jet(g,1.6,.8,Z,25,1);
+    for(let k=0;k<10;k++){const o=add(g,new THREE.SphereGeometry(.1,8,8),new THREE.MeshBasicMaterial({color:k%2?0xff9aee:0x9aeeff}),0,0,0,false);
+      upd.push(t=>{const a=t*.8+k*.63;o.position.set(Math.cos(a)*2.2,1+Math.sin(t*2+k)*.4,Z+.4+Math.sin(a)*1.3)})}}
+ };F[i]();return g;
+}
+
+/* ---------- rebuild ---------- */
+function mkSand(i){
+ const C=[0xe8c26a,0xf4efe3,0xf2a9c0,0xf8c9a0,0xf08a78,0xa98be0,0x7fb8ee,0x9fe3c4,0xffffff,0xeaf4ff];
+ const o={rainbow:i===8};
+ o.mat=i===9?M(C[i],{metalness:.55,roughness:.3,emissive:0x1a2a3a}):M(C[i]);
+ return o;
+}
+function rebuild(){
+ if(root)scene.remove(root);
+ upd=[];hue=0;root=new THREE.Group();
+ curMat=mkSand(save.sel.colour);
+ root.add(buildLand(save.sel.land));
+ const c=buildCastle(save.sel.shape);root.add(c);
+ root.add(buildGarden(save.sel.garden));
+ root.add(buildDeco(save.sel.deco,c));
+ root.add(buildWater(save.sel.water));
+ if(save.sel.colour===9){const n=160,p=new Float32Array(n*3),r=rng(5);for(let k=0;k<n;k++){const a=r()*6.283,d=r()*6;p[k*3]=Math.cos(a)*d;p[k*3+1]=r()*4;p[k*3+2]=Math.sin(a)*d}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:.09}));root.add(pts);upd.push(t=>{pts.material.opacity=1;pts.material.size=.07+Math.abs(Math.sin(t*3))*.05})}
+ scene.add(root);persist();
+}
+
+/* ---------- UI ---------- */
+let curCat=0;
+function drawTabs(){$('#tabs').innerHTML=CATS.map((c,i)=>`<button class="tab${i===curCat?' on':''}" data-i="${i}">${c.name}</button>`).join('')}
+function drawItems(){const c=CATS[curCat];
+ $('#items').innerHTML=c.items.map((n,i)=>{const o=isOpen(c.id,i),a=save.ads[c.id+':'+i]||0;
+  return `<button class="it${save.sel[c.id]===i?' on':''}${o?'':' lock'}" data-i="${i}">${n}<small>${o?(i<FREE?'Free':'Unlocked ✓'):'🔒 Watch '+ADS_NEEDED+' ads ('+a+'/'+ADS_NEEDED+')'}</small></button>`}).join('')}
+$('#tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;curCat=+b.dataset.i;drawTabs();drawItems()};
+$('#items').onclick=e=>{const b=e.target.closest('.it');if(!b)return;const i=+b.dataset.i,c=CATS[curCat];
+ if(isOpen(c.id,i)){save.sel[c.id]=i;rebuild();drawItems()}else askAd(c,i)};
+function toast(t){const d=$('#toast');d.textContent=t;d.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>d.style.display='none',1800)}
+let pend=null;
+function askAd(c,i){pend={c,i};const k=c.id+':'+i,a=save.ads[k]||0;
+ $('#mt').textContent='🔒 '+c.items[i];$('#mp').textContent='Watch '+ADS_NEEDED+' short ads to unlock this option. Ads watched: '+a+'/'+ADS_NEEDED;$('#modal').style.display='flex'}
+$('#mc').onclick=()=>{$('#modal').style.display='none';pend=null};
+/* Replace this placeholder with a real rewarded ad later; call done() when the ad finishes. */
+function showRewardedAd(done){let s=5;$('#ad').style.display='flex';$('#adn').textContent=s;
+ const t=setInterval(()=>{s--;$('#adn').textContent=s;if(s<=0){clearInterval(t);$('#ad').style.display='none';done()}},1000)}
+$('#mw').onclick=()=>{if(!pend)return;const{c,i}=pend,k=c.id+':'+i;$('#modal').style.display='none';
+ showRewardedAd(()=>{save.ads[k]=(save.ads[k]||0)+1;
+  if(save.ads[k]>=ADS_NEEDED){save.open[k]=1;save.sel[c.id]=i;rebuild();toast('Unlocked: '+c.items[i]+' 🎉');drawItems();pend=null}
+  else{drawItems();askAd(c,i)}})};
+$('#rnd').onclick=()=>{CATS.forEach(c=>{const o=c.items.map((_,i)=>i).filter(i=>isOpen(c.id,i));save.sel[c.id]=o[Math.floor(Math.random()*o.length)]});rebuild();drawItems()};
+$('#shot').onclick=()=>{renderer.render(scene,camera);renderer.domElement.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='my-sandcastle.png';a.click();toast('Picture saved 📷')})};
+
+/* ---------- camera controls ---------- */
+const ptr=new Map();let pd=0;
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);auto=false;pd=0});
+cv.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId);
+ if(ptr.size===1){theta-=(e.clientX-o[0])*.008;phi=Math.max(.25,Math.min(1.5,phi-(e.clientY-o[1])*.006))}
+ ptr.set(e.pointerId,[e.clientX,e.clientY]);
+ if(ptr.size===2){const [a,b]=[...ptr.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)dist=Math.max(7,Math.min(30,dist-(d-pd)*.03));pd=d}});
+const up=e=>{ptr.delete(e.pointerId);pd=0};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{dist=Math.max(7,Math.min(30,dist+e.deltaY*.01));e.preventDefault()},{passive:false});
+
+/* ---------- loop ---------- */
+const clock=new THREE.Clock();
+(function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime();
+ if(auto)theta+=.0025;
+ camera.position.set(Math.sin(theta)*Math.sin(phi)*dist,Math.cos(phi)*dist,Math.cos(theta)*Math.sin(phi)*dist);
+ camera.lookAt(0,1.4,0);upd.forEach(f=>f(t));renderer.render(scene,camera)})();
+
+drawTabs();drawItems();rebuild();
+</script>
+</body>
+</html>
