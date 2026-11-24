@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#08171c">
+<title>Christmas Decorations 3D | Festive World Builder</title>
+<meta name="description" content="Free Christmas tree decorating game: drag and drop shimmering 3D ornaments against the clock across 10 festive worlds.">
+<meta property="og:title" content="Christmas Decorations 3D | Festive World Builder">
+<meta property="og:description" content="Drag and drop decorations onto the tree before time runs out! 1 free world + 9 premium worlds, 3 levels each.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%84%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #ffe082;
+  --gold-deep: #b87b1e;
+  --cream: #fffaf0;
+  --ball: radial-gradient(circle at 30% 25%, #ffffff 0 7%, #eabfff 18%, #9333ea 56%, #3b0764 90%, #6b21a8 100%);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 50% -10%, #265c54 0%, #102a29 46%, #061014 100%) fixed;
+  color: var(--cream);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button { font: inherit; cursor: pointer; border: 0; color: inherit; }
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+.app { max-width: 1140px; margin: auto; padding: 16px; position: relative; z-index: 2; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.brand {
+  font-weight: 900; letter-spacing: .05em; font-size: clamp(17px, 3.8vw, 27px);
+  color: var(--gold);
+  text-shadow: 0 2px 0 #8a5610, 0 8px 20px #0009, 0 0 28px #ffd97844;
+  animation: brandGlow 3s ease-in-out infinite alternate; line-height: 1.15;
+}
+@keyframes brandGlow {
+  to { text-shadow: 0 2px 0 #8a5610, 0 8px 22px #000a, 0 0 36px #ffe082aa; }
+}
+.brand small {
+  display: block; color: #bde6dc; font-size: 10px; letter-spacing: .24em;
+  font-weight: 800; text-shadow: none; margin-top: 3px;
+}
+.hbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill-btn {
+  background: linear-gradient(180deg, #ffffff24, #ffffff10);
+  color: #fff; border: 1px solid #ffffff38;
+  border-radius: 50px; padding: 9px 15px; backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px #0004, inset 0 1px 0 #ffffff44;
+  transition: .2s; font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pill-btn:hover { background: #ffffff33; transform: translateY(-2px); box-shadow: 0 8px 18px #0006; }
+.pill-btn.prem-active {
+  background: linear-gradient(135deg, #fff0a8, #f5b93b, #d98a18);
+  color: #241602; border-color: #fff7cc;
+  box-shadow: 0 4px 18px #ffd97866, inset 0 1px 0 #fff;
+}
+
+.panel {
+  background: linear-gradient(180deg, #ffffff18, #ffffff0b);
+  border: 1px solid #ffffff2e; border-radius: 22px;
+  box-shadow: 0 20px 44px #0006, inset 0 1px 0 #ffffff38;
+  backdrop-filter: blur(12px);
+}
+.hidden { display: none !important; }
+
+/* ===== MENU ===== */
+.hero { text-align: center; margin: 6px 0 12px; }
+.hero h1 {
+  margin: 0; font-size: clamp(24px, 5.5vw, 38px); font-weight: 900;
+  background: linear-gradient(180deg, #fff7d6 0%, #ffd66b 55%, #e09b24 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 10px #0008);
+}
+.hero p { margin: 8px auto 0; color: #d5ece4; font-size: 13.5px; max-width: 650px; line-height: 1.5; }
+.sec {
+  margin: 24px 4px 12px; font-weight: 900; letter-spacing: .15em; font-size: 11.5px;
+  color: #bce0d6; display: flex; align-items: center; gap: 10px;
+}
+.sec:after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #ffffff35, transparent); }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; perspective: 1100px; }
+.card {
+  position: relative; border-radius: 22px; overflow: hidden;
+  background: linear-gradient(180deg, #0f2926, #071517);
+  border: 1px solid #ffffff38; text-align: left; padding: 0;
+  box-shadow: 0 10px 0 #040d0e, 0 22px 34px #0008, inset 0 1px 0 #ffffff40;
+  transition: transform .24s cubic-bezier(.2,.8,.2,1), box-shadow .24s, border-color .24s;
+  transform-style: preserve-3d; animation: cardIn .55s cubic-bezier(.2,1.3,.4,1) both;
+  display: flex; flex-direction: column;
+}
+.card:hover {
+  transform: translateY(-7px) rotateX(4deg) rotateY(-2deg);
+  box-shadow: 0 15px 0 #040d0e, 0 30px 44px #000a, 0 0 28px #ffd97833;
+  border-color: #ffe08299;
+}
+.card:active { transform: translateY(2px) scale(.98); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(28px) rotateX(-22deg); } }
+
+.card .thumb-wrap { position: relative; overflow: hidden; }
+.card .thumb-wrap::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(135deg, #ffffff28 0%, transparent 45%, #00000044 100%);
+  pointer-events: none;
+}
+.card .thumb { display: block; width: 100%; aspect-ratio: 600/490; }
+.thumb * { animation: none !important; }
+.card .info {
+  padding: 12px 14px 15px;
+  background: linear-gradient(180deg, #081819cc 0%, #071416 28%);
+  flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+}
+.card h3 { margin: 0; font-size: 14.5px; font-weight: 800; color: #fff; letter-spacing: -.01em; }
+.card .subtitle { margin: 3px 0 5px; font-size: 11.5px; font-weight: 700; color: var(--gold); }
+.card p { margin: 0; font-size: 11.5px; color: #c7e0d8; line-height: 1.42; }
+.card.featured { grid-column: 1/-1; }
+.card.featured .thumb { aspect-ratio: 600/330; }
+
+.badge {
+  position: absolute; top: 10px; left: 10px; padding: 5px 11px; border-radius: 99px;
+  font-size: 10px; font-weight: 900; letter-spacing: .09em; z-index: 2;
+  box-shadow: 0 4px 12px #0008, inset 0 1px 0 #ffffff66;
+}
+.badge.free { background: linear-gradient(135deg, #86efac, #22c55e); color: #052e16; }
+.badge.prem { background: linear-gradient(135deg, #4c1d95, #7c3aed); color: #f3e8ff; border: 1px solid #c4b5fd; }
+.badge.unlocked { background: linear-gradient(135deg, #fde047, #f59e0b); color: #271502; border: 1px solid #fef08a; }
+.lock { position: absolute; top: 8px; right: 11px; font-size: 20px; z-index: 2; filter: drop-shadow(0 3px 6px #000d); }
+
+.lvlchips { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+.chip {
+  font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 99px;
+  background: #ffffff18; color: #fde68a; border: 1px solid #ffffff1a;
+}
+.chip.x10 { background: linear-gradient(135deg, #6d28d988, #4c1d95aa); color: #ede9fe; border: 1px solid #c4b5fd66; }
+
+/* ===== GAME ===== */
+.levelbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.level {
+  padding: 10px 8px; border-radius: 15px;
+  background: linear-gradient(180deg, #ffffff18, #ffffff0c);
+  border: 1px solid #ffffff28; color: #fff; text-align: center;
+  box-shadow: 0 4px 0 #0004, inset 0 1px 0 #ffffff25;
+  transition: transform .15s, box-shadow .15s;
+}
+.level:hover { transform: translateY(-2px); }
+.level:active { transform: translateY(3px); box-shadow: 0 1px 0 #0004; }
+.level strong { display: block; font-size: 13px; letter-spacing: .04em; }
+.level span { font-size: 11.5px; color: #cde5dd; }
+.level.active {
+  background: linear-gradient(135deg, #fef08a, #facc15, #eab308);
+  color: #1f291c; border-color: #fef9c3;
+  box-shadow: 0 4px 0 #a16207, 0 0 22px #fde04766;
+}
+.level.active span { color: #364531; font-weight: 800; }
+.level.locked { opacity: .6; }
+
+.hud { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 16px; margin-bottom: 12px; }
+.hud-label { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: #bde0d5; font-weight: 800; }
+.timer {
+  font-size: clamp(25px, 5.5vw, 35px); font-weight: 900; color: var(--gold);
+  font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 #7a4b0c, 0 0 16px #ffd97844;
+}
+.timer.danger { color: #ff8f8f; text-shadow: 0 3px 0 #7a1f1f, 0 0 18px #ff5a5a; animation: pulse .5s infinite alternate; }
+@keyframes pulse { to { transform: scale(1.1); } }
+.progress-wrap { flex: 1; max-width: 400px; }
+.progress-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #e7f5ef; }
+.track { height: 13px; background: #051314; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 5px #000c, 0 1px 0 #ffffff1a; }
+.fill {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, #6ee7b7, #fde047, #f472b6, #6ee7b7);
+  background-size: 200% 100%; animation: shine 2.2s linear infinite;
+  border-radius: 20px; transition: width .35s cubic-bezier(.3,1.6,.5,1);
+  box-shadow: 0 0 14px #fde047aa, inset 0 2px 2px #ffffffaa;
+}
+@keyframes shine { to { background-position: -200% 0; } }
+
+/* 3D STAGE */
+.scene3d { perspective: 1300px; perspective-origin: 50% 42%; }
+.stage {
+  position: relative; overflow: hidden; background: #07181a; border-radius: 24px;
+  border: 2px solid #ffffff3d;
+  box-shadow: 0 32px 60px #0009, 0 0 0 5px #ffffff0c, inset 0 0 40px #00000066;
+  transform-style: preserve-3d; transition: transform .25s ease-out; will-change: transform;
+}
+.stage.dragging { transition: none; }
+.stage .shine {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 28%), #ffffff38, transparent 48%);
+  pointer-events: none; z-index: 3; mix-blend-mode: screen;
+}
+.stage .vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 45%, transparent 56%, #00000066 100%);
+  pointer-events: none; z-index: 2;
+}
+.stage svg { display: block; width: 100%; height: auto; max-height: 590px; touch-action: none; position: relative; z-index: 1; margin: auto; }
+
+.slot {
+  fill: #ffffff22; stroke: #ffffff99; stroke-width: 2; stroke-dasharray: 4 4;
+  transform-box: fill-box; transform-origin: center; animation: slotPulse 1.8s ease-in-out infinite;
+}
+.slot.ready { fill: #fde04755; stroke: #fef08a; stroke-width: 3; filter: drop-shadow(0 0 8px #fde047); }
+.slot.hot { fill: #fff7b2bb; stroke: #fff; stroke-width: 3.5; animation: none; transform: scale(1.28); filter: drop-shadow(0 0 14px #fff); }
+.slot.done { display: none; }
+@keyframes slotPulse { 50% { transform: scale(1.16); stroke-opacity: 1; } }
+
+.placed {
+  font-size: 25px; text-anchor: middle; dominant-baseline: central; pointer-events: none;
+  transform-box: fill-box; transform-origin: 50% 0;
+  filter: drop-shadow(0 5px 4px #0009) drop-shadow(0 0 6px #ffffff33);
+}
+.placed.pop { animation: pop .6s cubic-bezier(.2,1.8,.4,1) both; }
+.placed.sway { animation: pop .6s cubic-bezier(.2,1.8,.4,1) both, sway 3s ease-in-out .6s infinite alternate; }
+.placed.bob { transform-origin: 50% 100%; animation: pop .6s both, bob 1.6s ease-in-out .6s infinite; }
+.placed.spin {
+  font-size: 35px; transform-origin: 50% 50%;
+  animation: pop .8s both, spin3d 2.8s ease-in-out .8s infinite;
+  filter: drop-shadow(0 0 14px #ffe46a) drop-shadow(0 4px 6px #0008);
+}
+@keyframes pop { 0% { transform: scale(0) rotate(-40deg); opacity: 0; } 60% { transform: scale(1.45) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+@keyframes sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes bob { 50% { transform: translateY(-6px) scale(1.06, .96); } }
+@keyframes spin3d { 0%, 100% { transform: scaleX(1); } 25% { transform: scaleX(.22); } 50% { transform: scaleX(-1); } 75% { transform: scaleX(.22); } }
+
+.bulb, .tw { animation: blink 1.1s ease-in-out infinite alternate; }
+.tw { animation-duration: 2.2s; }
+@keyframes blink { from { opacity: .28; } to { opacity: 1; } }
+.treeFloat { transform-box: fill-box; transform-origin: 50% 100%; animation: treeBreath 5s ease-in-out infinite; }
+@keyframes treeBreath { 50% { transform: scale(1.007, 1.012); } }
+.drift { animation: drift 5s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translate(-10px, -5px); } to { transform: translate(10px, 7px); } }
+.aurora { animation: aur 7s ease-in-out infinite alternate; }
+@keyframes aur { from { transform: translateX(-22px); opacity: .55; } to { transform: translateX(22px); opacity: 1; } }
+.rays { animation: rays 6s ease-in-out infinite alternate; }
+@keyframes rays { from { opacity: .35; transform: translateX(-14px); } to { opacity: 1; transform: translateX(14px); } }
+.weed { transform-box: fill-box; transform-origin: 50% 100%; animation: weed 3.2s ease-in-out infinite alternate; }
+@keyframes weed { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.rise { animation: rise 6s linear infinite; }
+@keyframes rise { from { transform: translateY(0); opacity: .8; } to { transform: translateY(-420px); opacity: 0; } }
+
+.instructions { text-align: center; padding: 10px 8px 2px; font-size: 13px; color: #dff2eb; }
+.tray {
+  padding: 13px; margin-top: 12px; position: sticky; bottom: 8px; z-index: 25;
+  background: linear-gradient(180deg, #102e2af2, #091d1bf7);
+  border: 1px solid #ffffff38; border-radius: 22px;
+  box-shadow: 0 18px 36px #0009, inset 0 1px 0 #ffffff33;
+}
+.tray-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+.tray-title strong { font-size: 13.5px; color: #fff; }
+.tray-title span { font-size: 11.5px; color: #bfe0d6; font-weight: 700; }
+
+.items { display: grid; grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 8px; perspective: 700px; }
+.item {
+  min-width: 0; min-height: 84px; border-radius: 15px;
+  background: linear-gradient(165deg, #ffffff 0%, #fff8e7 55%, #ebd7ad 100%);
+  color: #16332a; padding: 7px 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 5px 0 #a88746, 0 10px 16px #0005, inset 0 2px 3px #ffffff;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: transform .18s, box-shadow .18s; transform-style: preserve-3d;
+}
+.item:not(.empty):hover {
+  transform: translateY(-5px) rotateX(10deg) rotateY(-6deg);
+  box-shadow: 0 10px 0 #a88746, 0 18px 24px #0006, 0 0 14px #fde04766;
+}
+.item:active { transform: translateY(3px) scale(.97); box-shadow: 0 1px 0 #a88746; }
+.item .emoji {
+  font-size: 25px; line-height: 1.1; transform: translateZ(18px);
+  filter: drop-shadow(0 4px 3px #0005); animation: float 2.4s ease-in-out infinite;
+}
+.item:nth-child(2n) .emoji { animation-delay: -.7s; }
+.item:nth-child(3n) .emoji { animation-delay: -1.4s; }
+@keyframes float { 50% { translate: 0 -3px; } }
+.item b { font-size: 10px; line-height: 1.12; text-align: center; font-weight: 800; }
+.item small { font-size: 10.5px; font-weight: 900; color: #8c4d12; }
+.item.empty { opacity: .34; filter: grayscale(1); box-shadow: none; }
+.item.empty .emoji { animation: none; }
+.sphere {
+  display: inline-block; width: 25px; height: 25px; border-radius: 50%;
+  background: var(--ball);
+  box-shadow: inset -4px -5px 7px #0007, inset 3px 3px 5px #ffffffaa, 0 3px 5px #0004;
+}
+
+.dragghost {
+  position: fixed; z-index: 99; pointer-events: none; font-size: 44px;
+  transform: translate(-50%, -50%) rotate(-8deg) scale(1.16);
+  filter: drop-shadow(0 16px 10px #0009) drop-shadow(0 0 14px #fde047);
+}
+.dragghost .sphere { width: 42px; height: 42px; }
+
+.actions { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin: 13px 0; }
+.primary, .secondary { padding: 12px 22px; border-radius: 999px; font-weight: 800; transition: transform .12s, box-shadow .12s; font-size: 13px; }
+.primary {
+  background: linear-gradient(135deg, #fef08a, #facc15, #eab308);
+  color: #1f291c; box-shadow: 0 5px 0 #a16207, 0 12px 20px #0005, inset 0 1px 0 #fff;
+}
+.primary:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #a16207, 0 16px 24px #0006; }
+.primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #a16207; }
+.secondary {
+  background: linear-gradient(180deg, #ffffff22, #ffffff12);
+  color: #fff; border: 1px solid #ffffff38; box-shadow: 0 4px 0 #0004;
+}
+.secondary:active { transform: translateY(3px); box-shadow: none; }
+
+.message { min-height: 24px; text-align: center; font-size: 13px; font-weight: 700; color: #fde68a; padding: 2px; }
+.stage.err { animation: stageShake .35s; }
+@keyframes stageShake { 25% { translate: -5px 0; } 75% { translate: 5px 0; } }
+
+.overlay {
+  position: fixed; inset: 0; background: #041012e0; z-index: 40;
+  display: flex; align-items: center; justify-content: center; padding: 18px;
+  backdrop-filter: blur(8px); perspective: 900px;
+}
+.modal {
+  width: min(470px, 100%); padding: 26px 24px; text-align: center;
+  background: linear-gradient(160deg, #214a42, #0d2324);
+  border: 1px solid #ffffff45; border-radius: 26px;
+  box-shadow: 0 32px 72px #000b, 0 0 44px #ffd97833, inset 0 1px 0 #ffffff44;
+  animation: modalIn .55s cubic-bezier(.2,1.4,.4,1) both;
+}
+.modal.prem-modal {
+  background: linear-gradient(160deg, #311a6e, #120a2c);
+  border-color: #c4b5fd66;
+  box-shadow: 0 32px 72px #000c, 0 0 48px #8b5cf655, inset 0 1px 0 #ffffff44;
+}
+@keyframes modalIn { from { transform: rotateX(40deg) scale(.78) translateY(44px); opacity: 0; } }
+.modal .big { font-size: 58px; animation: bigBounce 1.4s ease-in-out infinite; display: inline-block; filter: drop-shadow(0 10px 8px #0007); }
+@keyframes bigBounce { 50% { transform: translateY(-10px) scale(1.08); } }
+.modal h2 { margin: 6px 0 8px; color: var(--gold); text-shadow: 0 2px 0 #7a4b0c; font-size: 21px; }
+.modal p { color: #e2f0ea; font-size: 13.5px; line-height: 1.55; margin: 0 0 12px; }
+.modal .perk-list {
+  text-align: left; background: #ffffff12; border: 1px solid #ffffff24; border-radius: 16px;
+  padding: 12px 15px; margin: 10px 0 15px; font-size: 12.5px; color: #f3e8ff; line-height: 1.65;
+}
+.modal .row { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+.tiny { font-size: 11px; color: #b8d4cc; margin-top: 10px; }
+
+@media (max-width: 700px) {
+  .app { padding: 9px; }
+  #game.app-game { padding-bottom: 118px; }
+  .levelbar { gap: 5px; }
+  .level { padding: 8px 3px; }
+  .level strong { font-size: 11px; }
+  .level span { font-size: 10px; }
+  .hud { padding: 9px; }
+  .instructions, .tiny.game { display: none; }
+  .stage svg { max-height: calc(100dvh - 345px); min-height: 295px; }
+  .tray { position: fixed; left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); margin: 0; padding: 8px; }
+  .tray-title { display: none; }
+  .items { grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 5px; }
+  .item { min-height: 64px; padding: 5px 1px; border-radius: 12px; }
+  .item b { display: none; }
+  .item .emoji { font-size: 24px; }
+  .item small { font-size: 11.5px; }
+  .message {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 24;
+    background: #081a1aee; padding: 5px 14px; border-radius: 99px;
+    pointer-events: none; white-space: nowrap; min-height: 0; max-width: 94vw; overflow: hidden; text-overflow: ellipsis;
+  }
+}
+@media (min-width: 760px) {
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card.featured { grid-column: 1/-1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<!-- ================= MENU ================= -->
+<div class="app" id="menu">
+  <header>
+    <div class="brand">🎄 CHRISTMAS DECORATIONS 3D<small>SPARKLING FESTIVE WORLD BUILDER · CREATED BY HEATHER G</small></div>
+    <div class="hbtns">
+      <button class="pill-btn" id="premToggleBtn">💎 Unlock Premium</button>
+      <button class="pill-btn" id="soundBtnM">♫ Sound: Off</button>
+    </div>
+  </header>
+  <div class="hero">
+    <h1>Choose Your 3D Christmas World</h1>
+    <p>Play the classic Basic Tree for free or unlock 9 dazzling 3D Premium Worlds — each featuring 10 shimmering decorations per category!</p>
+  </div>
+  <div class="sec">1 · BASIC TREE · FREE</div>
+  <div class="cards" id="freeCards"></div>
+  <div class="sec">2 · PREMIUM WORLDS · 10 ITEMS PER CATEGORY</div>
+  <div class="cards" id="premCards"></div>
+  <div class="tiny" style="text-align:center;margin:22px 0 8px">Christmas Decorations 3D · Drag & Drop Festive Tree Builder<br><b style="color:var(--gold);letter-spacing:.06em">✨ Created by Heather G ✨</b><br><a href="https://heathergame.com" style="color:var(--gold);font-weight:700;text-decoration:none">🎮 More free games at heathergame.com</a></div>
+</div>
+
+<!-- ================= GAME ================= -->
+<div class="app app-game hidden" id="game">
+  <header>
+    <div class="brand" id="gameTitle">🎄 BASIC CHRISTMAS TREE<small>CLASSIC FESTIVE EDITION</small></div>
+    <div class="hbtns">
+      <button class="pill-btn" id="backBtn">← Worlds</button>
+      <button class="pill-btn" id="soundBtn">♫ Off</button>
+    </div>
+  </header>
+  <div class="levelbar" id="levelbar">
+    <button class="level active" data-level="1"><strong>LEVEL 1</strong><span>60 sec</span></button>
+    <button class="level" data-level="2"><strong>LEVEL 2</strong><span>45 sec</span></button>
+    <button class="level" data-level="3"><strong>LEVEL 3</strong><span>30 sec</span></button>
+  </div>
+  <div class="hud panel">
+    <div>
+      <div class="hud-label">Time Remaining</div>
+      <div class="timer" id="timer">01:00</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-top"><span>Decorations Placed</span><b id="count">0 / 37</b></div>
+      <div class="track"><div class="fill" id="progress"></div></div>
+    </div>
+  </div>
+  <div class="scene3d" id="scene3d">
+    <section class="stage" id="stage">
+      <div class="shine"></div>
+      <div class="vignette"></div>
+      <svg id="scene" viewBox="0 0 600 650" aria-label="3D Christmas tree decorating scene"></svg>
+    </section>
+  </div>
+  <div class="instructions">Drag each shimmering decoration from the tray onto its matching glowing slot on the 3D tree!</div>
+  <div class="tray panel">
+    <div class="tray-title">
+      <strong>✨ 3D Decoration Tray</strong>
+      <span id="remaining">37 items remaining</span>
+    </div>
+    <div class="items" id="items"></div>
+  </div>
+  <div class="message" id="message"></div>
+  <div class="actions">
+    <button class="primary" id="startBtn">▶ START</button>
+    <button class="secondary" id="resetBtn">↻ Restart</button>
+  </div>
+  <div class="tiny game" style="text-align:center">Move your cursor or finger across the scene to tilt the 3D lighting</div>
+  <div class="tiny" style="text-align:center;margin:8px 0 4px"><b style="color:var(--gold)">Created by Heather G</b></div>
+</div>
+
+<div class="overlay hidden" id="modal"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+
+/* ======================================================
+   PERSISTENT STORAGE (Premium locked by default)
+====================================================== */
+let save = { premium: false, unlocked: {}, stars: {}, sound: true };
+try {
+  save = Object.assign(save, JSON.parse(localStorage.getItem('hd_xmas_3d_en_v1') || '{}'));
+} catch (e) {}
+const persist = () => {
+  try { localStorage.setItem('hd_xmas_3d_en_v1', JSON.stringify(save)); } catch (e) {}
+};
+const worldOpen = w => !w.premium || save.premium;
+const unlockedLevel = w => Math.max(1, save.unlocked[w.id] || 1);
+
+/* ======================================================
+   3D VOLUMETRIC TREE TIERS & SLOT COORDINATES
+   - Free Basic Tree: 37 items (10+10+2+10+1+3+1)
+   - Each Premium World: Strictly 10 items per category (5 categories × 10 = 50 items)
+====================================================== */
+const TIER_TOP = 'M300 52 C272 115 242 162 214 195 Q300 218 386 195 C358 162 328 115 300 52 Z';
+const TIER_MID = 'M300 142 C255 215 208 272 162 318 Q300 348 438 318 C392 272 345 215 300 142 Z';
+const TIER_BOT = 'M300 245 C238 332 172 402 108 456 Q300 492 492 456 C428 402 362 332 300 245 Z';
+const TREE_SILHOUETTE = 'M300 52 L214 195 L252 188 L162 318 L212 306 L108 456 Q300 492 492 456 L388 306 L438 318 L348 188 L386 195 Z';
+const GROUND = 'M0 518 Q150 486 300 512 T600 508 V650 H0 Z';
+
+// Free Basic Tree Coordinates (37 slots)
+const GEO_FREE = {
+  bauble: [[242,216],[300,202],[358,216],[196,282],[268,272],[332,272],[404,282],[214,366],[300,352],[386,366]], // 10
+  star: [[266,144],[334,148],[222,244],[378,244],[174,330],[426,330],[250,324],[350,324],[198,408],[402,408]], // 10
+  light: [[300,250],[300,368]], // 2
+  ornament: [[300,124],[252,190],[348,190],[156,286],[444,286],[236,308],[364,308],[174,392],[426,392],[300,408]], // 10
+  topper: [[300,52]], // 1
+  gift: [[222,518],[300,528],[378,518]], // 3
+  char: [[476,502]] // 1
+};
+const ORDER_FREE = ['bauble', 'star', 'light', 'ornament', 'topper', 'gift', 'char'];
+const QTY_FREE = { bauble: 10, star: 10, light: 2, ornament: 10, topper: 1, gift: 3, char: 1 };
+
+// Premium Worlds Coordinates (Strictly 10 items per category = 5 × 10 = 50 slots)
+const GEO_PREM = {
+  bauble: [[245,212],[300,198],[355,212],[198,278],[268,268],[332,268],[402,278],[212,360],[300,346],[388,360]], // 10
+  star: [[272,138],[328,138],[224,242],[376,242],[174,324],[426,324],[252,318],[348,318],[192,408],[408,408]], // 10
+  ornament: [[300,116],[250,182],[350,182],[156,286],[444,286],[238,302],[362,302],[160,390],[440,390],[300,402]], // 10
+  crown: [[300,50],[276,84],[324,84],[210,174],[390,174],[146,246],[454,246],[118,350],[482,350],[300,236]], // 10
+  gift: [[124,500],[172,518],[218,504],[264,526],[336,526],[382,504],[428,518],[476,500],[144,538],[456,538]] // 10
+};
+const ORDER_PREM = ['bauble', 'star', 'ornament', 'crown', 'gift'];
+const QTY_PREM = { bauble: 10, star: 10, ornament: 10, crown: 10, gift: 10 };
+
+const DURATIONS_FREE = { 1: 60, 2: 45, 3: 30 };
+const DURATIONS_PREM = { 1: 90, 2: 65, 3: 45 };
+
+const LIGHT_PATHS = [
+  'M226 186 C392 206 198 266 382 296 S202 368 388 404',
+  'M374 182 C202 222 398 272 212 316 S398 372 212 424'
+];
+
+/* ---------- 3D Scenery & Atmospheric Helpers ---------- */
+const rngf = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
+function stars(n, seed, ymax, col = '#fff') {
+  const r = rngf(seed);
+  let o = '';
+  for (let i = 0; i < n; i++) {
+    const rad = (r() * 1.9 + .5).toFixed(1);
+    o += `<circle cx="${(r() * 600).toFixed(0)}" cy="${(r() * ymax).toFixed(0)}" r="${rad}" fill="${col}" class="tw" style="animation-delay:${(-r() * 3).toFixed(1)}s"/>`;
+  }
+  return o;
+}
+function bokehOrbs(n, seed, col1, col2) {
+  const r = rngf(seed);
+  let o = '';
+  for (let i = 0; i < n; i++) {
+    const cx = (r() * 600).toFixed(0);
+    const cy = (r() * 490).toFixed(0);
+    const rad = (r() * 22 + 8).toFixed(0);
+    const col = i % 2 === 0 ? col1 : col2;
+    o += `<circle cx="${cx}" cy="${cy}" r="${rad}" fill="${col}" opacity="${(r() * .14 + .04).toFixed(2)}" class="drift" style="animation-delay:${(-r() * 5).toFixed(1)}s"/>`;
+  }
+  return o;
+}
+const PP = [[0,-60],[-22,-20],[-10,-20],[-28,10],[-12,10],[-34,45],[34,45],[12,10],[28,10],[10,-20],[22,-20]];
+const pine = (x, y, s, f, o = 1) => `<path d="M${PP.map(([a, b]) => `${(x + a * s).toFixed(1)} ${(y + b * s).toFixed(1)}`).join(' L')}Z" fill="${f}" opacity="${o}"/>`;
+const crystal = (x, y, w, h, c) => `<g><path d="M${x} ${y} L${x + w * .5} ${y - h} L${x + w} ${y}Z" fill="${c}" opacity=".85"/><path d="M${x} ${y} L${x + w * .5} ${y - h} L${x + w * .5} ${y}Z" fill="#fff" opacity=".38"/><path d="M${x + w * .5} ${y - h} V${y}" stroke="#fff" stroke-width="2" opacity=".75"/></g>`;
+const lolly = (x, y, r, c1, c2) => `<g><rect x="${x - 4}" y="${y}" width="8" height="${520 - y}" rx="4" fill="#fff" opacity=".92"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c1}"/><circle cx="${x}" cy="${y}" r="${r * .62}" fill="none" stroke="${c2}" stroke-width="${r * .25}"/><circle cx="${x}" cy="${y}" r="${r * .2}" fill="${c2}"/><circle cx="${x - r * .35}" cy="${y - r * .35}" r="${r * .16}" fill="#fff" opacity=".8"/></g>`;
+const cane = (x, y, h) => `<g><path d="M${x} ${y} V${y - h} a22 22 0 0 1 44 0" stroke="#fff" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M${x} ${y} V${y - h} a22 22 0 0 1 44 0" stroke="#ff3b6b" stroke-width="13" fill="none" stroke-dasharray="9 11" stroke-linecap="butt"/></g>`;
+const frostTips = (c, o = .88) => [[300,56],[214,195],[386,195],[162,318],[438,318],[108,456],[492,456]].map(([x, y]) => `<ellipse cx="${x}" cy="${y + 2}" rx="${x === 300 ? 15 : 28}" ry="${x === 300 ? 8 : 10}" fill="${c}" opacity="${o}"/>`).join('');
+
+/* ======================================================
+   10 WORLDS (1 FREE + 9 PREMIUM — 100% ENGLISH)
+====================================================== */
+const WORLDS = [
+  {
+    id: 'basic',
+    name: 'Basic Christmas Tree',
+    subtitle: 'Classic Festive Edition (Free)',
+    premium: false,
+    desc: 'Snowmen, Santa, reindeer, gift boxes, twinkling lights and traditional holiday ornaments.',
+    sky: ['#0f2d2c', '#255447'],
+    ground: ['#ffffff', '#cbe0d6'],
+    tree: ['#6ee7b7', '#15803d', '#052e16'],
+    rim: '#a7f3d0',
+    stroke: '#064e3b',
+    trunk: ['#b47b50', '#78492a', '#3e2110'],
+    glow: '#fde68a',
+    capColor: '#2d5749',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#eabfff 18%,#9333ea 56%,#3b0764 90%,#6b21a8 100%)',
+    ball: ['#ffffff', '#eabfff', '#9333ea', '#3b0764'],
+    bulbs: ['#ff5a5a', '#fde047', '#38bdf8', '#4ade80', '#f472b6'],
+    wire: '#3a2a10',
+    fx: 'snow',
+    fxCol: '#fff',
+    items: {
+      bauble: { name: 'Purple Bauble' },
+      star: { name: 'Mini Star', emoji: '⭐' },
+      light: { name: 'Fairy Lights', emoji: '💡' },
+      ornament: { name: 'Xmas Charm', emoji: '☃️', list: ['☃️','🔔','🍭','🎅','🧦','🧸','❄️','🦌','🍬','🛷'] },
+      topper: { name: 'Tree Topper', emoji: '🌟' },
+      gift: { name: 'Gift Box', emoji: '🎁', list: ['🎁','🎀','🎁'] },
+      char: { name: 'Reindeer', emoji: '🦌' }
+    },
+    scenery: p => stars(42, 3, 300) + bokehOrbs(10, 8, '#fde047', '#6ee7b7')
+      + `<circle cx="502" cy="88" r="28" fill="#fef9c3" opacity=".95"/><circle cx="502" cy="88" r="46" fill="#fef08a" opacity=".18"/>`
+      + `<path d="M0 470 Q100 405 210 450 T410 440 T600 455 V540 H0Z" fill="#1b4338"/>`
+      + pine(60,455,1.1,'#14382e') + pine(545,450,1.3,'#14382e') + pine(25,475,.8,'#0f2c24') + pine(582,478,.9,'#0f2c24'),
+    extra: () => frostTips('#fff', .85)
+  },
+
+  {
+    id: 'wonderland',
+    name: '01. Wonderland Christmas Tree',
+    subtitle: 'Frozen Crystal Fairyland',
+    premium: true,
+    desc: 'Sculpted crystal pine tree with snowflakes, diamonds, silver-blue radiance, angels and unicorns.',
+    sky: ['#070d33', '#234999'],
+    ground: ['#f0faff', '#93c5fd'],
+    tree: ['#ffffff', '#7dd3fc', '#1d4ed8'],
+    rim: '#e0f2fe',
+    stroke: '#bae6fd',
+    trunk: ['#bae6fd', '#60a5fa', '#1e3a8a'],
+    glow: '#7dd3fc',
+    capColor: '#1e40af',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#bae6fd 18%,#0284c7 56%,#0c4a6e 90%,#38bdf8 100%)',
+    ball: ['#ffffff', '#bae6fd', '#0284c7', '#0c4a6e'],
+    fx: 'snow',
+    fxCol: '#e0f2fe',
+    items: {
+      bauble: { name: 'Crystal Orb (×10)' },
+      star: { name: 'Snowflake (×10)', emoji: '❄️' },
+      ornament: { name: 'Angels & Unicorns (×10)', emoji: '🦄', list: ['💎','👼','🦄','🔮','💠','🧊','🧚','⛄','✨','🪄'] },
+      crown: { name: 'Ice Diamonds (×10)', emoji: '💎', list: ['🌟','💎','❄️','✨','💎','🌟','❄️','✨','💎','🌟'] },
+      gift: { name: 'Crystal Gifts (×10)', emoji: '🎁', list: ['🎁','🦄','🎁','👼','🎁','💎','🎁','⛄','🎁','🧊'] }
+    },
+    scenery: () => stars(55, 11, 320, '#bae6fd') + bokehOrbs(12, 14, '#7dd3fc', '#ffffff')
+      + `<path d="M0 0H90Q40 200 75 400Q30 470 0 530Z" fill="#050b2e" opacity=".7"/><path d="M600 0H510Q560 200 525 400Q570 470 600 530Z" fill="#050b2e" opacity=".7"/>`
+      + Array.from({ length: 12 }, (_, i) => `<path d="M${i * 50} 0 L${i * 50 + 50} 0 L${i * 50 + 25} ${40 + ((i * 37) % 50)}Z" fill="#e0f2fe" opacity=".55"/>`).join('')
+      + crystal(18,520,66,215,'#38bdf8') + crystal(78,520,46,135,'#bae6fd') + crystal(528,520,68,235,'#38bdf8') + crystal(486,520,46,145,'#bae6fd'),
+    extra: () => `<path d="M300 52 L252 188 L300 300 L348 188Z M162 318 L300 300 L212 306 M438 318 L300 300 L388 306 M300 300 L300 456" stroke="#fff" stroke-width="2.5" opacity=".55" fill="#fff" fill-opacity=".1"/>` + frostTips('#fff', .92)
+  },
+
+  {
+    id: 'lapland',
+    name: '02. Lapland Santa Village Tree',
+    subtitle: "Santa's Arctic Workshop",
+    premium: true,
+    desc: 'Snow-covered wooden cabins, glowing northern lights, gift workshop, reindeer, sleigh, Santa and elves.',
+    sky: ['#08133b', '#312e81'],
+    ground: ['#f8fafc', '#cbd5e1'],
+    tree: ['#4ade80', '#15803d', '#052e16'],
+    rim: '#bbf7d0',
+    stroke: '#064e3b',
+    trunk: ['#b47b50', '#78492a', '#3e2110'],
+    glow: '#fde047',
+    capColor: '#1e3a8a',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fecaca 18%,#dc2626 56%,#7f1d1d 90%,#ef4444 100%)',
+    ball: ['#ffffff', '#fecaca', '#dc2626', '#7f1d1d'],
+    fx: 'snow',
+    fxCol: '#fff',
+    items: {
+      bauble: { name: 'Ruby Bauble (×10)' },
+      star: { name: 'North Star (×10)', emoji: '⭐' },
+      ornament: { name: 'Elves & Treats (×10)', emoji: '🧝', list: ['🧝','🔔','🍪','🧦','🛷','⛄','🍬','🥛','🦌','🕯️'] },
+      crown: { name: 'Village Lanterns (×10)', emoji: '🌟', list: ['🌟','🔔','⭐','✨','🔔','⭐','✨','🔔','⭐','🌟'] },
+      gift: { name: 'Santa & Sleigh (×10)', emoji: '🎅', list: ['🎅','🛷','🦌','🎁','🧝','🎁','🧸','🎁','🚂','🎁'] }
+    },
+    scenery: p => stars(48, 21, 260) + `<defs><linearGradient id="${p}au" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#34d399" stop-opacity="0"/><stop offset=".5" stop-color="#34d399" stop-opacity=".65"/><stop offset="1" stop-color="#818cf8" stop-opacity="0"/></linearGradient></defs>`
+      + `<path class="aurora" d="M-40 70 C100 0 220 170 340 80 S520 20 650 100 L650 270 C500 210 420 310 300 230 S100 260 -40 210Z" fill="url(#${p}au)"/>`
+      + `<path d="M0 480 Q120 430 240 470 T440 455 T600 470 V540 H0Z" fill="#64748b" opacity=".45"/>`
+      + pine(70,470,1.2,'#0f172a') + pine(535,470,1.4,'#0f172a')
+      + `<g><rect x="12" y="440" width="92" height="72" fill="#78350f"/><path d="M0 442 L58 396 L116 442Z" fill="#f8fafc"/><rect x="28" y="462" width="20" height="22" fill="#fde047" class="tw"/><rect x="66" y="462" width="20" height="22" fill="#fde047" class="tw"/></g>`
+      + `<g><rect x="505" y="455" width="80" height="58" fill="#92400e"/><path d="M495 457 L545 417 L595 457Z" fill="#f8fafc"/><rect x="520" y="474" width="18" height="20" fill="#fde047" class="tw"/><rect x="552" y="474" width="18" height="20" fill="#fde047" class="tw"/></g>`,
+    extra: () => frostTips('#fff', .95)
+  },
+
+  {
+    id: 'candy',
+    name: '03. Candy Wonderland Tree',
+    subtitle: 'Sweet Confectionery Realm',
+    premium: true,
+    desc: 'Pink and violet candy tree adorned with lollipops, candy canes, gingerbread, chocolate, donuts and cupcakes.',
+    sky: ['#f9a8d4', '#a78bfa'],
+    ground: ['#fdf2f8', '#f9a8d4'],
+    tree: ['#fbcfe8', '#ec4899', '#7e22ce'],
+    rim: '#fce7f3',
+    stroke: '#fdf2f8',
+    trunk: ['#e0a96d', '#a16207', '#713f12'],
+    glow: '#fef08a',
+    capColor: '#9d174d',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fbcfe8 18%,#ec4899 56%,#831843 90%,#f472b6 100%)',
+    ball: ['#ffffff', '#fbcfe8', '#ec4899', '#831843'],
+    fx: 'candy',
+    fxCol: '#fff',
+    items: {
+      bauble: { name: 'Sugar Sphere (×10)' },
+      star: { name: 'Sweet Candy (×10)', emoji: '🍬' },
+      ornament: { name: 'Donuts & Cupcakes (×10)', emoji: '🍭', list: ['🍭','🍩','🧁','🍪','🍫','🍰','🍓','🍡','🥨','🍦'] },
+      crown: { name: 'Swirl Lollipops (×10)', emoji: '🍭', list: ['🍭','🍬','🍩','🧁','🍭','🍬','🍩','🧁','🍭','🍬'] },
+      gift: { name: 'Gingerbread & Sweets (×10)', emoji: '🍪', list: ['🍪','🎁','🍰','🎁','🧁','🎁','🍩','🎁','🍫','🎁'] }
+    },
+    scenery: () => bokehOrbs(12, 33, '#ffffff', '#fde047')
+      + `<ellipse cx="110" cy="110" rx="70" ry="26" fill="#fff" opacity=".85"/><ellipse cx="150" cy="95" rx="46" ry="26" fill="#fff" opacity=".85"/><ellipse cx="470" cy="150" rx="80" ry="28" fill="#fff" opacity=".8"/>`
+      + `<ellipse cx="90" cy="520" rx="150" ry="90" fill="#a7f3d0" opacity=".85"/><ellipse cx="520" cy="525" rx="160" ry="95" fill="#fbcfe8" opacity=".9"/>`
+      + lolly(60,330,48,'#ec4899','#fff') + lolly(540,300,54,'#38bdf8','#fff') + cane(110,515,120) + cane(450,515,150),
+    extra: () => Array.from({ length: 14 }, (_, i) => `<path d="M${25 + i * 38} 480 L${25 + i * 38 + 145} 52" stroke="#fff" stroke-width="9" opacity=".32"/>`).join('')
+  },
+
+  {
+    id: 'royal',
+    name: '04. Royal Christmas Palace',
+    subtitle: 'Imperial Gold & Crimson Hall',
+    premium: true,
+    desc: 'Regal gold and crimson tree with crystal drops, luxury chandeliers, golden crowns and royal gifts.',
+    sky: ['#3b0712', '#7f1d1d'],
+    ground: ['#fef3c7', '#b45309'],
+    tree: ['#34d399', '#065f46', '#022c22'],
+    rim: '#fde68a',
+    stroke: '#f59e0b',
+    trunk: ['#92400e', '#78350f', '#451a03'],
+    glow: '#fde047',
+    capColor: '#fef08a',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fef08a 18%,#eab308 56%,#713f12 90%,#facc15 100%)',
+    ball: ['#ffffff', '#fef08a', '#eab308', '#713f12'],
+    fx: 'gold',
+    fxCol: '#fde047',
+    groundDeco: `<path d="M235 520 L365 520 L445 650 L155 650Z" fill="#991b1b"/><path d="M235 520 L155 650 M365 520 L445 650" stroke="#f59e0b" stroke-width="5"/>`,
+    items: {
+      bauble: { name: 'Imperial Gold Orb (×10)' },
+      star: { name: 'Gilded Star (×10)', emoji: '⭐' },
+      ornament: { name: 'Royal Jewels (×10)', emoji: '💎', list: ['👑','🔔','🕯️','💎','🍷','🎻','🦢','🏰','📜','🎖️'] },
+      crown: { name: 'Golden Crowns (×10)', emoji: '👑', list: ['👑','✨','💎','🪶','👑','✨','💎','🪶','👑','✨'] },
+      gift: { name: 'Palace Gifts (×10)', emoji: '🎁', list: ['🎁','🎀','👑','🎁','💎','🎁','🎀','🎁','🏆','🎁'] }
+    },
+    scenery: p => `<defs><linearGradient id="${p}gd" x1="0" x2="1"><stop stop-color="#78350f"/><stop offset=".35" stop-color="#fef08a"/><stop offset="1" stop-color="#92400e"/></linearGradient></defs>`
+      + `<rect y="0" width="600" height="520" fill="#7f1d1d" opacity=".5"/>` + bokehOrbs(12, 44, '#fde047', '#f59e0b')
+      + [110, 430].map(x => `<path d="M${x} 330 V170 Q${x + 35} 110 ${x + 70} 170 V330Z" fill="#fde68a" opacity=".45" class="tw"/><path d="M${x} 330 V170 Q${x + 35} 110 ${x + 70} 170 V330Z" fill="none" stroke="#f59e0b" stroke-width="5"/>`).join('')
+      + [20, 530].map(x => `<rect x="${x}" y="40" width="50" height="480" fill="url(#${p}gd)"/>`).join('')
+      + `<path d="M300 0 V50" stroke="#f59e0b" stroke-width="3"/><ellipse cx="300" cy="62" rx="62" ry="11" fill="none" stroke="#fde047" stroke-width="5"/>` + stars(26, 5, 60, '#fef08a'),
+    extra: () => frostTips('#fef08a', .55)
+  },
+
+  {
+    id: 'forest',
+    name: '05. Enchanted Forest Christmas',
+    subtitle: 'Mystic Woodland Sanctuary',
+    premium: true,
+    desc: 'Ancient woodland pine with glowing mushrooms, foxes, rabbits, deer, owls, lanterns and fireflies.',
+    sky: ['#040d1a', '#163245'],
+    ground: ['#e0f2fe', '#94a3b8'],
+    tree: ['#4ade80', '#166534', '#052e16'],
+    rim: '#bbf7d0',
+    stroke: '#064e3b',
+    trunk: ['#78350f', '#451a03', '#270e02'],
+    glow: '#fef08a',
+    capColor: '#1e3a5f',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fef9c3 18%,#f59e0b 56%,#78350f 90%,#fbbf24 100%)',
+    ball: ['#ffffff', '#fef9c3', '#f59e0b', '#78350f'],
+    fx: 'snow',
+    fxCol: '#e0f2fe',
+    items: {
+      bauble: { name: 'Firefly Globe (×10)' },
+      star: { name: 'Woodland Spark (×10)', emoji: '✨' },
+      ornament: { name: 'Forest Critters (×10)', emoji: '🦊', list: ['🦊','🐰','🦌','🐿️','🍄','🏮','🦔','🦉','🌰','🐦'] },
+      crown: { name: 'Glowing Lanterns (×10)', emoji: '🏮', list: ['⭐','🏮','🍄','✨','🏮','🍄','✨','🏮','🍄','⭐'] },
+      gift: { name: 'Woodland Friends (×10)', emoji: '🦌', list: ['🦊','🐰','🦌','🍄','🎁','🦉','🐿️','🎁','🦔','🎁'] }
+    },
+    scenery: () => stars(44, 31, 300, '#e0f2fe') + bokehOrbs(12, 55, '#fde047', '#38bdf8')
+      + `<circle cx="490" cy="90" r="32" fill="#fef9c3" opacity=".95"/>`
+      + pine(100,430,2,'#081b29',.92) + pine(500,440,2.2,'#081b29',.92) + pine(200,450,1.4,'#061622') + pine(410,455,1.4,'#061622')
+      + Array.from({ length: 16 }, (_, i) => { const r = rngf(i * 7 + 3); return `<circle cx="${(90 + r() * 420).toFixed(0)}" cy="${(220 + r() * 280).toFixed(0)}" r="3.2" fill="#fef08a" class="tw drift" style="animation-delay:${(-r() * 4).toFixed(1)}s"/>`; }).join(''),
+    extra: () => frostTips('#fff', .9)
+  },
+
+  {
+    id: 'ocean',
+    name: '06. Ocean Christmas Tree',
+    subtitle: 'Underwater Coral Kingdom',
+    premium: true,
+    desc: 'Bioluminescent coral tree with starfish, seashells, pearls, jellyfish, mermaid tails, dolphins and bubbles.',
+    sky: ['#0369a1', '#082f49'],
+    ground: ['#fef3c7', '#d97706'],
+    tree: ['#5eead4', '#0d9488', '#115e59'],
+    rim: '#ccfbf1',
+    stroke: '#134e4a',
+    trunk: ['#ea580c', '#9a3412', '#431407'],
+    glow: '#67e8f9',
+    capColor: '#78350f',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#cffafe 18%,#06b6d4 56%,#164e63 90%,#22d3ee 100%)',
+    ball: ['#ffffff', '#cffafe', '#06b6d4', '#164e63'],
+    fx: 'bubbles',
+    fxCol: '#fff',
+    items: {
+      bauble: { name: 'Ocean Pearl (×10)' },
+      star: { name: 'Golden Starfish (×10)', emoji: '⭐' },
+      ornament: { name: 'Sea Creatures (×10)', emoji: '🐚', list: ['🐚','🐠','🐡','🦀','🐙','🪼','🧜‍♀️','🐢','🦞','🫧'] },
+      crown: { name: 'Coral & Bubbles (×10)', emoji: '🫧', list: ['🌟','🫧','🐚','🪸','🫧','🐚','🪸','🫧','🐚','🌟'] },
+      gift: { name: 'Dolphins & Treasure (×10)', emoji: '🐬', list: ['🐬','🎁','🐢','🐚','🎁','🦀','🐙','🎁','🧜‍♀️','🎁'] }
+    },
+    scenery: p => `<defs><linearGradient id="${p}ray" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`
+      + `<g class="rays"><path d="M60 0 L140 0 L260 520 L90 520Z" fill="url(#${p}ray)" opacity=".5"/><path d="M420 0 L510 0 L600 520 L440 520Z" fill="url(#${p}ray)" opacity=".45"/></g>`
+      + bokehOrbs(10, 66, '#67e8f9', '#a5f3fc')
+      + `<text x="70" y="200" font-size="34" class="drift">🐟</text><text x="480" y="160" font-size="38" class="drift">🐠</text>`
+      + [[40,'#10b981'],[75,'#059669'],[540,'#10b981'],[565,'#059669']].map(([x, c], i) => `<path class="weed" d="M${x} 520 q-18 -50 0 -90 q18 -40 0 -90" stroke="${c}" stroke-width="9" fill="none" stroke-linecap="round" style="animation-delay:${-i * .6}s"/>`).join(''),
+    extra: () => frostTips('#ccfbf1', .42)
+  },
+
+  {
+    id: 'princess',
+    name: '07. Princess Pink Tree',
+    subtitle: 'Royal Rose & Pearl Edition',
+    premium: true,
+    desc: 'Blush pink crystal balls, pearl garlands, butterfly ornaments, pink roses, mini crowns and diamond stars.',
+    sky: ['#4c1130', '#9d174d'],
+    ground: ['#fdf2f8', '#f472b6'],
+    tree: ['#fbcfe8', '#f472b6', '#9d174d'],
+    rim: '#fff1f2',
+    stroke: '#fce7f3',
+    trunk: ['#e2a896', '#9f5848', '#5c2b21'],
+    glow: '#fbcfe8',
+    capColor: '#831843',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fce7f3 18%,#f43f5e 56%,#881337 90%,#fb7185 100%)',
+    ball: ['#ffffff', '#fce7f3', '#f43f5e', '#881337'],
+    fx: 'petals',
+    fxCol: '#fbcfe8',
+    items: {
+      bauble: { name: 'Pink Crystal Ball (×10)' },
+      star: { name: 'Diamond Star (×10)', emoji: '💎' },
+      ornament: { name: 'Butterflies & Roses (×10)', emoji: '🦋', list: ['🦋','🌹','🌸','🎀','💖','🦢','🩰','🪞','🌷','✨'] },
+      crown: { name: 'Mini Crowns (×10)', emoji: '👑', list: ['💎','👑','🦋','🌹','👑','🦋','🌹','👑','🦋','💎'] },
+      gift: { name: 'Royal Pink Gifts (×10)', emoji: '🎀', list: ['🎁','🎀','👑','🌸','🎁','🩰','💖','🎁','🌹','🎁'] }
+    },
+    scenery: () => stars(45, 77, 320, '#fbcfe8') + bokehOrbs(14, 78, '#f472b6', '#ffffff')
+      + `<path d="M0 0 Q110 80 80 280 Q40 130 0 110Z" fill="#f472b6" opacity=".45"/><path d="M600 0 Q490 80 520 280 Q560 130 600 110Z" fill="#f472b6" opacity=".45"/>`
+      + `<ellipse cx="95" cy="515" rx="75" ry="26" fill="#fbcfe8"/><ellipse cx="505" cy="515" rx="75" ry="26" fill="#fbcfe8"/>`,
+    extra: () => frostTips('#fff1f2', .88)
+  },
+
+  {
+    id: 'unicorn',
+    name: '08. Unicorn Rainbow Tree',
+    subtitle: 'Pastel Sky & Magic Horn',
+    premium: true,
+    desc: 'Pastel rainbow tree with rainbow baubles, unicorns, fluffy clouds, shooting stars and a glittering horn topper.',
+    sky: ['#2e1065', '#6d28d9'],
+    ground: ['#faf5ff', '#d8b4fe'],
+    tree: ['#f5d0fe', '#a855f7', '#3b82f6'],
+    rim: '#ffffff',
+    stroke: '#ffffff',
+    trunk: ['#e9d5ff', '#a855f7', '#581c87'],
+    glow: '#fef08a',
+    capColor: '#581c87',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#fef08a 20%,#f472b6 52%,#38bdf8 85%,#7c3aed 100%)',
+    ball: ['#ffffff', '#fef08a', '#f472b6', '#38bdf8'],
+    fx: 'rainbow',
+    fxCol: '#fff',
+    items: {
+      bauble: { name: 'Rainbow Bauble (×10)' },
+      star: { name: 'Shooting Star (×10)', emoji: '🌠' },
+      ornament: { name: 'Unicorns & Clouds (×10)', emoji: '🦄', list: ['🦄','🌈','☁️','🌠','🍭','💖','🎀','✨','🦋','🌟'] },
+      crown: { name: 'Glittering Horns (×10)', emoji: '🦄', list: ['🦄','🌈','☁️','🌠','✨','🌈','☁️','🌠','✨','🦄'] },
+      gift: { name: 'Rainbow Gifts (×10)', emoji: '🎁', list: ['🦄','🎁','🌈','🎁','☁️','🎁','💖','🎁','🌠','🎁'] }
+    },
+    scenery: () => stars(50, 88, 300, '#fef9c3') + bokehOrbs(12, 89, '#f472b6', '#38bdf8')
+      + `<path d="M-20 340 A320 260 0 0 1 620 340" fill="none" stroke="#f43f5e" stroke-width="14" opacity=".45"/>`
+      + `<path d="M-20 354 A320 260 0 0 1 620 354" fill="none" stroke="#facc15" stroke-width="14" opacity=".45"/>`
+      + `<path d="M-20 368 A320 260 0 0 1 620 368" fill="none" stroke="#34d399" stroke-width="14" opacity=".45"/>`
+      + `<path d="M-20 382 A320 260 0 0 1 620 382" fill="none" stroke="#38bdf8" stroke-width="14" opacity=".45"/>`
+      + `<g opacity=".92"><circle cx="85" cy="495" r="32" fill="#fff"/><circle cx="118" cy="490" r="38" fill="#fff"/><circle cx="152" cy="498" r="28" fill="#fff"/></g>`
+      + `<g opacity=".92"><circle cx="450" cy="498" r="28" fill="#fff"/><circle cx="485" cy="490" r="38" fill="#fff"/><circle cx="518" cy="495" r="32" fill="#fff"/></g>`,
+    extra: () => frostTips('#fff', .92)
+  },
+
+  {
+    id: 'galaxy',
+    name: '09. Galaxy Christmas Tree',
+    subtitle: 'Cosmic Nebula & Planets',
+    premium: true,
+    desc: 'Deep space nebula tree with orbiting planets, moons, shooting stars, rockets and glowing constellations.',
+    sky: ['#030512', '#171c47'],
+    ground: ['#1e293b', '#0f172a'],
+    tree: ['#22d3ee', '#2563eb', '#1e1b4b'],
+    rim: '#a5f3fc',
+    stroke: '#67e8f9',
+    trunk: ['#818cf8', '#4338ca', '#1e1b4b'],
+    glow: '#22d3ee',
+    capColor: '#bae6fd',
+    ballCss: 'radial-gradient(circle at 30% 25%,#fff 0 7%,#67e8f9 18%,#2563eb 58%,#1e1b4b 90%,#38bdf8 100%)',
+    ball: ['#ffffff', '#67e8f9', '#2563eb', '#1e1b4b'],
+    fx: 'galaxy',
+    fxCol: '#67e8f9',
+    items: {
+      bauble: { name: 'Nebula Planet (×10)' },
+      star: { name: 'Constellation (×10)', emoji: '✨' },
+      ornament: { name: 'Planets & Moons (×10)', emoji: '🪐', list: ['🪐','🌙','🚀','👨‍🚀','☄️','🛸','🌌','🛰️','⭐','🔭'] },
+      crown: { name: 'Shooting Stars (×10)', emoji: '🌟', list: ['🌟','☄️','🌙','🪐','✨','☄️','🌙','🪐','✨','🌟'] },
+      gift: { name: 'Cosmic Pods (×10)', emoji: '🚀', list: ['🚀','🎁','🛸','🪐','🎁','👨‍🚀','🌙','🎁','🛰️','🎁'] }
+    },
+    scenery: () => stars(80, 99, 490, '#e0f2fe') + bokehOrbs(14, 100, '#22d3ee', '#818cf8')
+      + `<circle cx="105" cy="115" r="36" fill="#fb923c" opacity=".88"/><ellipse cx="105" cy="115" rx="64" ry="12" fill="none" stroke="#fde047" stroke-width="5" transform="rotate(-18 105 115)"/>`
+      + `<circle cx="505" cy="145" r="24" fill="#22d3ee" opacity=".8"/>`
+      + `<path d="M60 440 Q300 370 540 440" fill="none" stroke="#67e8f9" stroke-width="2" stroke-dasharray="6 8" opacity=".5"/>`
+      + `<path d="M90 320 Q300 260 510 320" fill="none" stroke="#fde047" stroke-width="2" stroke-dasharray="5 7" opacity=".5"/>`,
+    extra: () => frostTips('#a5f3fc', .68)
+  }
+];
+
+/* ======================================================
+   VOLUMETRIC 3D SVG RENDERER (Shared by Cards & Stage)
+====================================================== */
+function sceneMarkup(w, p) {
+  const T = w.tree, B = w.ball;
+  return `<defs>
+    <linearGradient id="${p}sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${w.sky[0]}"/><stop offset="1" stop-color="${w.sky[1]}"/></linearGradient>
+    <linearGradient id="${p}gr" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${w.ground[0]}"/><stop offset="1" stop-color="${w.ground[1]}"/></linearGradient>
+    <!-- 3D Conical Foliage Gradient (Specular Left, Deep Shadow Right) -->
+    <linearGradient id="${p}tg" x1="0.15" y1="0.1" x2="0.9" y2="0.9">
+      <stop offset="0%" stop-color="${T[0]}"/>
+      <stop offset="48%" stop-color="${T[1]}"/>
+      <stop offset="100%" stop-color="${T[2]}"/>
+    </linearGradient>
+    <!-- Ambient Occlusion Shadow between Tiers -->
+    <linearGradient id="${p}ao" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Specular Rim Light -->
+    <linearGradient id="${p}rim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${w.rim}" stop-opacity="0.65"/>
+      <stop offset="35%" stop-color="${w.rim}" stop-opacity="0"/>
+    </linearGradient>
+    <!-- 3D Cylindrical Trunk -->
+    <linearGradient id="${p}tk" x1="0" x2="1">
+      <stop offset="0%" stop-color="${w.trunk[0]}"/>
+      <stop offset="55%" stop-color="${w.trunk[1]}"/>
+      <stop offset="100%" stop-color="${w.trunk[2]}"/>
+    </linearGradient>
+    <!-- 3D Glossy Metallic Bauble -->
+    <radialGradient id="${p}ball" cx=".30" cy=".25" r=".78">
+      <stop offset="0%" stop-color="${B[0]}"/>
+      <stop offset="16%" stop-color="${B[1]}"/>
+      <stop offset="56%" stop-color="${B[2]}"/>
+      <stop offset="100%" stop-color="${B[3]}"/>
+    </radialGradient>
+    <radialGradient id="${p}sun" cx=".5" cy=".5" r=".5">
+      <stop stop-color="${w.glow}" stop-opacity=".5"/>
+      <stop offset="1" stop-color="${w.glow}" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="${p}glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="${p}drop3d" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000" flood-opacity="0.48"/>
+    </filter>
+    <clipPath id="${p}clip"><path d="${TREE_SILHOUETTE}"/></clipPath>
+  </defs>
+
+  <rect width="600" height="650" fill="url(#${p}sky)"/>
+  ${w.scenery(p)}
+  <circle cx="300" cy="285" r="285" fill="url(#${p}sun)" class="tw"/>
+  <path d="${GROUND}" fill="url(#${p}gr)"/>
+  ${w.groundDeco || ''}
+
+  <!-- 3D Ground Contact Shadow -->
+  <ellipse cx="300" cy="548" rx="205" ry="24" fill="#000" opacity=".32"/>
+  <ellipse cx="300" cy="544" rx="135" ry="14" fill="#000" opacity=".38"/>
+
+  <!-- Sculpted 3D Trunk -->
+  <rect x="268" y="432" width="64" height="102" rx="10" fill="url(#${p}tk)" stroke="#00000066" stroke-width="3"/>
+  <rect x="274" y="436" width="12" height="92" rx="5" fill="#fff" opacity=".18"/>
+
+  <!-- 3D Layered Volumetric Tree Tiers -->
+  <g class="treeFloat" filter="url(#${p}drop3d)">
+    <!-- Bottom Tier -->
+    <path d="${TIER_BOT}" fill="url(#${p}tg)" stroke="${w.stroke}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="${TIER_BOT}" fill="url(#${p}rim)"/>
+    <!-- Cast Shadow from Middle Tier onto Bottom Tier -->
+    <path d="M162 318 Q300 356 438 318 L452 352 Q300 390 148 352 Z" fill="url(#${p}ao)"/>
+
+    <!-- Middle Tier -->
+    <path d="${TIER_MID}" fill="url(#${p}tg)" stroke="${w.stroke}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="${TIER_MID}" fill="url(#${p}rim)"/>
+    <!-- Cast Shadow from Top Tier onto Middle Tier -->
+    <path d="M214 195 Q300 226 386 195 L402 226 Q300 258 198 226 Z" fill="url(#${p}ao)"/>
+
+    <!-- Top Tier -->
+    <path d="${TIER_TOP}" fill="url(#${p}tg)" stroke="${w.stroke}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="${TIER_TOP}" fill="url(#${p}rim)"/>
+
+    <g clip-path="url(#${p}clip)">
+      ${w.extra ? w.extra(p) : ''}
+    </g>
+  </g>`;
+}
+
+/* ======================================================
+   MENU & PREMIUM UNLOCK FLOW (100% ENGLISH)
+====================================================== */
+function updatePremButton() {
+  const btn = $('premToggleBtn');
+  if (save.premium) {
+    btn.classList.add('prem-active');
+    btn.textContent = '👑 Premium: Unlocked';
+  } else {
+    btn.classList.remove('prem-active');
+    btn.textContent = '💎 Unlock Premium';
+  }
+}
+
+function openPremiumModal(targetWorld = null) {
+  showModal(
+    '💎',
+    'UNLOCK ALL PREMIUM WORLDS',
+    `Experience all <b>9 Dazzling 3D Christmas Worlds</b> with shimmering custom themes and massive decoration sets!`,
+    [
+      ['✨ UNLOCK ALL NOW (FREE)', 'primary', () => {
+        save.premium = true;
+        persist();
+        updatePremButton();
+        buildMenu();
+        celebrate();
+        sfx.unlock();
+        if (targetWorld) enterWorld(targetWorld);
+      }],
+      ['MAYBE LATER', 'secondary', () => {}]
+    ],
+    true,
+    `<div class="perk-list">
+      ✅ Unlock all <b>9 Premium 3D Worlds</b> (Wonderland, Lapland Santa Village, Candy Wonderland, Royal Palace, Enchanted Forest, Ocean Christmas, Princess Pink, Unicorn Rainbow, Galaxy Christmas).<br>
+      ✅ <b>Strictly 10 items per decoration category</b> in every Premium world (50 shimmering items per tree).<br>
+      ✅ Full 3-tier time challenge modes for every world.
+    </div>`
+  );
+}
+
+$('premToggleBtn').onclick = () => {
+  if (save.premium) {
+    showModal(
+      '👑',
+      'PREMIUM UNLOCKED',
+      'All 9 3D Premium Worlds are unlocked and ready to play!',
+      [
+        ['CONTINUE PLAYING', 'primary', () => {}],
+        ['Lock Again', 'secondary', () => {
+          save.premium = false;
+          persist();
+          updatePremButton();
+          buildMenu();
+        }]
+      ],
+      true
+    );
+  } else {
+    openPremiumModal();
+  }
+};
+
+function buildMenu() {
+  updatePremButton();
+  const free = $('freeCards'), prem = $('premCards');
+  free.innerHTML = ''; prem.innerHTML = '';
+
+  WORLDS.forEach((w, i) => {
+    const b = document.createElement('button');
+    b.className = 'card' + (w.premium ? '' : ' featured');
+    b.style.animationDelay = (i * .05) + 's';
+    const open = worldOpen(w);
+    const badgeHtml = !w.premium
+      ? '<span class="badge free">FREE</span>'
+      : (open ? '<span class="badge unlocked">👑 PREMIUM · UNLOCKED</span>' : '<span class="badge prem">💎 PREMIUM</span>');
+
+    b.innerHTML = `
+      ${badgeHtml}
+      ${(w.premium && !open) ? '<span class="lock">🔒</span>' : ''}
+      <div class="thumb-wrap">
+        <svg class="thumb" viewBox="0 0 600 540" preserveAspectRatio="xMidYMid slice">${sceneMarkup(w, 't-' + w.id + '-')}</svg>
+      </div>
+      <div class="info">
+        <div>
+          <h3>${w.name}</h3>
+          <div class="subtitle">${w.subtitle}</div>
+          <p>${w.desc}</p>
+        </div>
+        <div class="lvlchips">
+          ${w.premium
+            ? '<span class="chip x10">✨ 10 items / category</span><span class="chip">90s</span><span class="chip">65s</span><span class="chip">45s</span>'
+            : '<span class="chip">37 Classic Items</span><span class="chip">60s</span><span class="chip">45s</span><span class="chip">30s</span>'
+          }
+        </div>
+      </div>`;
+    b.onclick = () => { sfx.click(); enterWorld(w); };
+    (w.premium ? prem : free).appendChild(b);
+  });
+}
+
+/* ======================================================
+   GAMEPLAY ENGINE
+====================================================== */
+let world = WORLDS[0], level = 1, placed = new Set(), inventory = {}, running = false, ended = false, timeLeft = 60, tick = null, sound = save.sound !== false, audioCtx = null;
+let targetData = [], currentOrder = ORDER_FREE, currentQty = QTY_FREE, currentTotal = 37;
+const slotEls = {};
+const drawn = new Set();
+
+function getWorldConfig(w) {
+  if (w.premium) {
+    return { geo: GEO_PREM, order: ORDER_PREM, qty: QTY_PREM, total: 50, durations: DURATIONS_PREM };
+  }
+  return { geo: GEO_FREE, order: ORDER_FREE, qty: QTY_FREE, total: 37, durations: DURATIONS_FREE };
+}
+
+function enterWorld(w) {
+  if (!worldOpen(w)) {
+    openPremiumModal(w);
+    return;
+  }
+  world = w;
+  level = 1;
+  const cfg = getWorldConfig(w);
+  currentOrder = cfg.order;
+  currentQty = cfg.qty;
+  currentTotal = cfg.total;
+
+  targetData = [];
+  currentOrder.forEach(id => {
+    cfg.geo[id].forEach((p, i) => targetData.push({ id, index: i, x: p[0], y: p[1], key: id + '-' + i }));
+  });
+
+  const lvlBtns = document.querySelectorAll('.level');
+  lvlBtns[0].querySelector('span').textContent = cfg.durations[1] + ' sec';
+  lvlBtns[1].querySelector('span').textContent = cfg.durations[2] + ' sec';
+  lvlBtns[2].querySelector('span').textContent = cfg.durations[3] + ' sec';
+
+  $('menu').classList.add('hidden');
+  $('game').classList.remove('hidden');
+  $('gameTitle').innerHTML = `🎄 ${w.name.toUpperCase()}<small>${w.subtitle.toUpperCase()}</small>`;
+  document.documentElement.style.setProperty('--ball', w.ballCss);
+  $('items').style.setProperty('--cols', currentOrder.length);
+
+  $('scene').innerHTML = sceneMarkup(w, 'g-') +
+    `<g id="targets"></g><g id="decorations"></g>` +
+    `<text x="300" y="618" fill="${w.capColor}" font-size="16" font-weight="900" text-anchor="middle" letter-spacing="4">MERRY CHRISTMAS</text>`;
+
+  drawn.clear();
+  drawTargets();
+  setFx(w.fx, w.fxCol);
+  reset();
+
+  const note = w.premium
+    ? `Premium Edition includes <b>5 categories × 10 items = 50 3D decorations</b>!`
+    : `Place all <b>37 classic decorations</b> onto the tree before time runs out!`;
+
+  showModal(
+    w.premium ? '💎' : '🎄',
+    w.name,
+    `${w.desc}<br><br>${note}<br><b>Level 1 · ${cfg.durations[1]} seconds</b>`,
+    [["LET'S PLAY", 'primary', start]],
+    w.premium
+  );
+  scrollTo(0, 0);
+}
+
+function backToMenu() {
+  clearInterval(tick);
+  running = false;
+  ended = true;
+  $('game').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+  $('modal').classList.add('hidden');
+  setFx('snow', '#fff');
+  buildMenu();
+  scrollTo(0, 0);
+}
+
+const svgNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+  parent.appendChild(e);
+  return e;
+}
+
+function drawTargets() {
+  const g = $('targets');
+  g.innerHTML = '';
+  Object.keys(slotEls).forEach(k => delete slotEls[k]);
+  targetData.forEach((t, n) => {
+    const r = t.id === 'light' ? 24 : (t.id === 'gift' || t.id === 'char' ? 22 : 18);
+    const c = svgEl('circle', { cx: t.x, cy: t.y, r, class: 'slot' }, g);
+    c.style.animationDelay = (-(n % 9) * 0.2) + 's';
+    slotEls[t.key] = c;
+  });
+}
+
+const trayIcon = id => id === 'bauble' ? '<span class="sphere"></span>' : world.items[id].emoji;
+
+function renderPlaced() {
+  const g = $('decorations');
+  if (!g) return;
+  [...g.children].forEach(c => {
+    if (!placed.has(c.dataset.key)) {
+      c.remove();
+      drawn.delete(c.dataset.key);
+    }
+  });
+
+  targetData.forEach(t => {
+    const el = slotEls[t.key];
+    if (!el) return;
+    el.classList.toggle('done', placed.has(t.key));
+    if (!placed.has(t.key) || drawn.has(t.key)) return;
+    drawn.add(t.key);
+
+    const it = world.items[t.id];
+    const grp = svgEl('g', { 'data-key': t.key }, g);
+
+    if (t.id === 'light') {
+      const path = svgEl('path', { d: LIGHT_PATHS[t.index], fill: 'none', stroke: world.wire, 'stroke-width': 3, 'stroke-linecap': 'round' }, grp);
+      const len = path.getTotalLength();
+      for (let i = 0; i <= 12; i++) {
+        const p = path.getPointAtLength(len * i / 12), col = world.bulbs[(i + t.index) % 5];
+        const b = svgEl('circle', { cx: p.x, cy: p.y, r: 6.5, fill: col, class: 'bulb', filter: 'url(#g-glow)' }, grp);
+        b.style.animationDelay = (-(i % 5) * .23) + 's';
+        svgEl('circle', { cx: p.x - 1.8, cy: p.y - 2, r: 2, fill: '#fff', opacity: .9 }, grp);
+      }
+      return;
+    }
+
+    if (t.id === 'bauble') {
+      const s = svgEl('g', { class: 'placed pop sway' }, grp);
+      svgEl('line', { x1: t.x, y1: t.y - 22, x2: t.x, y2: t.y - 12, stroke: '#fde047', 'stroke-width': 2 }, s);
+      svgEl('rect', { x: t.x - 4.5, y: t.y - 16, width: 9, height: 5.5, rx: 2, fill: '#fde047' }, s);
+      svgEl('circle', { cx: t.x, cy: t.y, r: 14, fill: 'url(#g-ball)', style: 'filter:drop-shadow(0 5px 4px #0009)' }, s);
+      svgEl('ellipse', { cx: t.x - 4.5, cy: t.y - 5, rx: 4, ry: 2.2, fill: '#fff', opacity: .75, transform: `rotate(-30 ${t.x - 4.5} ${t.y - 5})` }, s);
+      return;
+    }
+
+    let emoji = it.list ? it.list[t.index % it.list.length] : it.emoji;
+    let cls = 'placed pop';
+    if (t.id === 'ornament') cls = 'placed sway';
+    if (t.id === 'gift') cls = 'placed bob';
+    if (t.id === 'star') cls = 'placed sway';
+    if (t.id === 'crown') cls = (t.index === 0 ? 'placed spin' : 'placed sway');
+    if (t.id === 'topper') cls = 'placed spin';
+    if (t.id === 'char') cls = 'placed bob';
+
+    const text = svgEl('text', { x: t.x, y: t.y, class: cls }, grp);
+    text.textContent = emoji;
+    if (t.id === 'gift') text.style.fontSize = '29px';
+    if (t.id === 'char') text.style.fontSize = '42px';
+    if (t.id === 'crown' && t.index === 0) text.style.fontSize = '35px';
+  });
+}
+
+function renderTray() {
+  const box = $('items');
+  box.innerHTML = '';
+  currentOrder.forEach(id => {
+    const n = inventory[id];
+    const b = document.createElement('button');
+    b.className = 'item' + (n === 0 ? ' empty' : '');
+    b.dataset.id = id;
+    b.disabled = n === 0;
+    b.innerHTML = `<span class="emoji">${trayIcon(id)}</span><b>${world.items[id].name}</b><small>× ${n}</small>`;
+    b.addEventListener('pointerdown', startDrag);
+    box.appendChild(b);
+  });
+  $('remaining').textContent = (currentTotal - placed.size) + ' items remaining';
+}
+
+function updateHUD() {
+  $('count').textContent = placed.size + ' / ' + currentTotal;
+  $('progress').style.width = (placed.size / currentTotal * 100) + '%';
+  $('timer').textContent = String(Math.floor(timeLeft / 60)).padStart(2, '0') + ':' + String(timeLeft % 60).padStart(2, '0');
+  $('timer').classList.toggle('danger', timeLeft <= 10 && running);
+}
+
+function reset() {
+  clearInterval(tick);
+  running = false;
+  ended = false;
+  placed.clear();
+  currentOrder.forEach(id => inventory[id] = currentQty[id]);
+  const cfg = getWorldConfig(world);
+  timeLeft = cfg.durations[level];
+
+  $('startBtn').textContent = '▶ START LEVEL ' + level;
+  $('message').textContent = `Place all ${currentTotal} decorations before time runs out!`;
+  renderPlaced();
+  renderTray();
+  updateHUD();
+
+  const ul = unlockedLevel(world);
+  document.querySelectorAll('.level').forEach(b => {
+    const n = +b.dataset.level;
+    b.classList.toggle('active', n === level);
+    b.classList.toggle('locked', n > ul);
+    b.querySelector('strong').textContent = 'LEVEL ' + n + (n > ul ? ' 🔒' : '');
+    const st = save.stars[world.id + '-' + n] || 0;
+    b.querySelector('span').textContent = cfg.durations[n] + ' sec' + (st ? ' · ' + '★'.repeat(st) : '');
+  });
+}
+
+function start() {
+  if (running || ended) return;
+  running = true;
+  sfx.go();
+  $('modal').classList.add('hidden');
+  $('startBtn').textContent = 'IN PROGRESS…';
+  renderTray();
+  runTick();
+}
+
+function runTick() {
+  clearInterval(tick);
+  tick = setInterval(() => {
+    timeLeft--;
+    updateHUD();
+    if (timeLeft > 0 && timeLeft <= 10) sfx.tick(timeLeft);
+    if (timeLeft <= 0) finish(false);
+  }, 1000);
+}
+
+// Pause the clock automatically when the player leaves the tab
+document.addEventListener('visibilitychange', () => {
+  if (!running || ended) return;
+  if (document.hidden) {
+    clearInterval(tick);
+    $('message').textContent = '⏸ Paused — come back to continue!';
+  } else {
+    $('message').textContent = 'Back in the game — keep decorating!';
+    runTick();
+  }
+});
+
+function finish(win) {
+  if (ended) return;
+  ended = true;
+  running = false;
+  clearInterval(tick);
+  renderTray();
+  updateHUD();
+
+  if (win) {
+    $('message').textContent = '🎉 Spectacular! Every single decoration is sparkling in place!';
+    if (level < 3) save.unlocked[world.id] = Math.max(save.unlocked[world.id] || 1, level + 1);
+    const total = getWorldConfig(world).durations[level];
+    const ratio = timeLeft / total;
+    const earned = ratio >= .5 ? 3 : ratio >= .2 ? 2 : 1;
+    const key = world.id + '-' + level;
+    const prev = save.stars[key] || 0;
+    save.stars[key] = Math.max(prev, earned);
+    persist();
+    const starHtml = `<div style="font-size:34px;margin:2px 0 10px;letter-spacing:6px">${'⭐'.repeat(earned)}<span style="opacity:.3">${'⭐'.repeat(3 - earned)}</span></div>`
+      + `<div class="tiny" style="margin:-4px 0 12px">${earned > prev && prev ? 'New personal best!' : 'Best: ' + save.stars[key] + ' / 3 stars'} · Finish with more time left for more stars</div>`;
+    celebrate();
+    sfx.win();
+    setTimeout(() => showModal(
+      '🏆',
+      'MAGNIFICENT VICTORY!',
+      `You completed Level ${level} of <b>${world.name}</b> with ${timeLeft} seconds to spare!`,
+      level < 3
+        ? [['NEXT LEVEL', 'primary', () => { level++; reset(); start(); }], ['ALL WORLDS', 'secondary', backToMenu]]
+        : [['PLAY AGAIN', 'primary', () => { level = 1; reset(); start(); }], ['ALL WORLDS', 'secondary', backToMenu]],
+      world.premium,
+      starHtml
+    ), 1300);
+  } else {
+    $('message').textContent = `Time is up! You placed ${placed.size} of ${currentTotal} decorations.`;
+    sfx.lose();
+    showModal(
+      '⏰',
+      'TIME IS UP!',
+      `You placed ${placed.size} out of ${currentTotal} decorations. Try again and beat the clock!`,
+      [['TRY AGAIN', 'primary', () => { reset(); start(); }], ['ALL WORLDS', 'secondary', backToMenu]],
+      world.premium
+    );
+  }
+}
+
+function showModal(icon, title, desc, btns, isPrem = false, extraHtml = '') {
+  const m = $('modal');
+  m.innerHTML = `<div class="modal ${isPrem ? 'prem-modal' : ''}">
+    <div class="big">${icon}</div>
+    <h2>${title}</h2>
+    <p>${desc}</p>
+    ${extraHtml}
+    <div class="row"></div>
+    <div class="tiny">Christmas Decorations 3D · Created by Heather G</div>
+  </div>`;
+  const row = m.querySelector('.row');
+  btns.forEach(([label, cls, fn]) => {
+    const b = document.createElement('button');
+    b.className = cls;
+    b.textContent = label;
+    b.onclick = () => { sfx.click(); m.classList.add('hidden'); fn(); };
+    row.appendChild(b);
+  });
+  m.classList.remove('hidden');
+}
+
+/* ======================================================
+   DRAG & DROP ENGINE (MOUSE + TOUCH)
+====================================================== */
+let drag = null, ghost = null, hotKey = null;
+const sceneXY = (cx, cy) => {
+  const r = $('scene').getBoundingClientRect();
+  const s = Math.min(r.width / 600, r.height / 650);
+  const ox = r.left + (r.width - 600 * s) / 2;
+  const oy = r.top + (r.height - 650 * s) / 2;
+  return [(cx - ox) / s, (cy - oy) / s];
+};
+const toClient = (x, y) => {
+  const r = $('scene').getBoundingClientRect();
+  const s = Math.min(r.width / 600, r.height / 650);
+  const ox = r.left + (r.width - 600 * s) / 2;
+  const oy = r.top + (r.height - 650 * s) / 2;
+  return [ox + x * s, oy + y * s];
+};
+
+function startDrag(ev) {
+  if (ended) return;
+  if (!running) {
+    $('message').textContent = '▶ Press START first, then drag the decorations!';
+    return;
+  }
+  const id = ev.currentTarget.dataset.id;
+  if (inventory[id] <= 0) return;
+  ev.preventDefault();
+  drag = { id, x: ev.clientX, y: ev.clientY };
+  $('stage').classList.add('dragging');
+  $('stage').style.transform = 'none';
+
+  ghost = document.createElement('div');
+  sfx.pop();
+  ghost.className = 'dragghost';
+  ghost.innerHTML = trayIcon(id);
+  document.body.appendChild(ghost);
+  moveGhost(ev.clientX, ev.clientY);
+
+  targetData.forEach(t => {
+    if (t.id === id && !placed.has(t.key)) slotEls[t.key].classList.add('ready');
+  });
+  ev.currentTarget.setPointerCapture?.(ev.pointerId);
+  window.addEventListener('pointermove', moveDrag);
+  window.addEventListener('pointerup', endDrag, { once: true });
+  window.addEventListener('pointercancel', cancelDrag, { once: true });
+}
+
+function cancelDrag() {
+  window.removeEventListener('pointermove', moveDrag);
+  window.removeEventListener('pointerup', endDrag);
+  if (ghost) { ghost.remove(); ghost = null; }
+  $('stage').classList.remove('dragging');
+  Object.values(slotEls).forEach(s => s.classList.remove('ready', 'hot'));
+  hotKey = null;
+  drag = null;
+}
+
+function moveGhost(x, y) {
+  if (ghost) {
+    ghost.style.left = x + 'px';
+    ghost.style.top = y + 'px';
+  }
+}
+
+function nearest(x, y, id) {
+  let best = null, dist = Infinity;
+  targetData.forEach(t => {
+    if (t.id !== id || placed.has(t.key)) return;
+    const d = Math.hypot(t.x - x, t.y - y);
+    if (d < dist) { dist = d; best = t; }
+  });
+  return { best, dist };
+}
+
+function moveDrag(ev) {
+  if (!drag) return;
+  drag.x = ev.clientX;
+  drag.y = ev.clientY;
+  moveGhost(ev.clientX, ev.clientY);
+  const [x, y] = sceneXY(ev.clientX, ev.clientY);
+  const { best, dist } = nearest(x, y, drag.id);
+  const k = best && dist < 48 ? best.key : null;
+  if (k !== hotKey) {
+    if (hotKey && slotEls[hotKey]) slotEls[hotKey].classList.remove('hot');
+    hotKey = k;
+    if (k) slotEls[k].classList.add('hot');
+  }
+}
+
+function endDrag(ev) {
+  window.removeEventListener('pointermove', moveDrag);
+  window.removeEventListener('pointercancel', cancelDrag);
+  if (ghost) { ghost.remove(); ghost = null; }
+  $('stage').classList.remove('dragging');
+  Object.values(slotEls).forEach(s => s.classList.remove('ready', 'hot'));
+  hotKey = null;
+  if (!drag) return;
+
+  const [x, y] = sceneXY(ev.clientX, ev.clientY);
+  const { best, dist } = nearest(x, y, drag.id);
+  if (best && dist < 48 && running && !ended) {
+    placed.add(best.key);
+    inventory[drag.id]--;
+    renderPlaced();
+    renderTray();
+    updateHUD();
+    const [cx, cy] = toClient(best.x, best.y);
+    burst(cx, cy, (best.id === 'topper' || best.id === 'crown') ? 45 : 22);
+    sfx.place(best.id, placed.size);
+    $('message').textContent = ['Dazzling!', 'Sparkling!', 'Magical!', 'Brilliant!', 'Keep going!'][placed.size % 5];
+    if (placed.size === currentTotal) finish(true);
+  } else {
+    $('message').textContent = 'Drop each ornament onto a matching glowing slot on the tree!';
+    $('stage').classList.remove('err');
+    void $('stage').offsetWidth;
+    $('stage').classList.add('err');
+    sfx.error();
+  }
+  drag = null;
+}
+
+/* ======================================================
+   3D PARALLAX STAGE TILT & SPECULAR LIGHTING
+====================================================== */
+const stage = $('stage');
+$('scene3d').addEventListener('pointermove', e => {
+  if (drag) return;
+  const r = stage.getBoundingClientRect();
+  const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  stage.style.transform = `rotateY(${(px - .5) * 10}deg) rotateX(${(.5 - py) * 8}deg)`;
+  stage.style.setProperty('--mx', px * 100 + '%');
+  stage.style.setProperty('--my', py * 100 + '%');
+});
+$('scene3d').addEventListener('pointerleave', () => { if (!drag) stage.style.transform = 'none'; });
+(function idle(t) {
+  if (!drag && !stage.matches(':hover') && !$('game').classList.contains('hidden')) {
+    stage.style.transform = `rotateY(${Math.sin(t / 2200) * 2.8}deg) rotateX(${Math.cos(t / 2800) * 1.8}deg)`;
+  }
+  requestAnimationFrame(idle);
+})(0);
+
+/* ======================================================
+   AMBIENT PARTICLE CANVAS & CELEBRATION FIREWORKS
+====================================================== */
+const cv = $('fx'), ctx = cv.getContext('2d');
+let W, H;
+const dpr = Math.min(2, devicePixelRatio || 1);
+function resize() {
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
+
+const COLORS = ['#fde047', '#f472b6', '#6ee7b7', '#38bdf8', '#fff', '#fb923c', '#c084fc'];
+let fxKind = 'snow', fxCol = '#fff', amb = [], parts = [];
+
+function setFx(k, c) {
+  fxKind = k; fxCol = c;
+  amb = Array.from({ length: k === 'bubbles' ? 45 : 85 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 2.8 + .9,
+    s: Math.random() * .8 + .35,
+    p: Math.random() * 6,
+    c: COLORS[(Math.random() * 7) | 0],
+    a: Math.random() * 6
+  }));
+}
+setFx('snow', '#fff');
+
+function burst(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 6.283, v = Math.random() * 4 + 1.5;
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 0, max: 40 + Math.random() * 30, size: Math.random() * 3 + 2, c: COLORS[i % COLORS.length], g: .08 });
+  }
+}
+
+function celebrate() {
+  let n = 0;
+  const iv = setInterval(() => {
+    burst(innerWidth * (.15 + Math.random() * .7), innerHeight * (.1 + Math.random() * .4), 45);
+    for (let i = 0; i < 25; i++) {
+      parts.push({ x: Math.random() * innerWidth, y: -10, vx: (Math.random() - .5) * 2, vy: Math.random() * 3 + 2, life: 0, max: 200, size: Math.random() * 6 + 4, c: COLORS[i % COLORS.length], rot: Math.random() * 6, g: .02, conf: true });
+    }
+    tone(600 + n * 80, .12, 'sine', .04);
+    if (++n > 7) clearInterval(iv);
+  }, 180);
+}
+
+function loop(t) {
+  ctx.clearRect(0, 0, W, H);
+  amb.forEach(f => {
+    if (fxKind === 'bubbles') {
+      f.y -= f.s * 1.4; f.x += Math.sin(t / 700 + f.p) * .5;
+      if (f.y < -10) { f.y = H + 10; f.x = Math.random() * W; }
+      ctx.globalAlpha = .55; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 2.2, 0, 6.283); ctx.stroke();
+      return;
+    }
+    f.y += f.s; f.x += Math.sin(t / 900 + f.p) * .45;
+    if (f.y > H + 8) { f.y = -8; f.x = Math.random() * W; }
+
+    if (fxKind === 'candy' || fxKind === 'rainbow') {
+      ctx.globalAlpha = .9; ctx.fillStyle = f.c;
+      ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.p + t / 600);
+      ctx.fillRect(-4, -1.8, 8, 3.6); ctx.restore();
+    } else if (fxKind === 'petals') {
+      ctx.globalAlpha = .8; ctx.fillStyle = fxCol;
+      ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.p + t / 700);
+      ctx.beginPath(); ctx.ellipse(0, 0, 4.5, 2.5, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    } else if (fxKind === 'gold' || fxKind === 'galaxy') {
+      ctx.globalAlpha = .5 + .5 * Math.sin(t / 300 + f.a); ctx.fillStyle = fxCol;
+      ctx.shadowColor = fxCol; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * .85, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+    } else {
+      ctx.globalAlpha = .55 + f.r / 8; ctx.fillStyle = fxCol;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 6.283); ctx.fill();
+    }
+  });
+
+  ctx.globalAlpha = 1;
+  parts = parts.filter(p => p.life++ < p.max);
+  parts.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= .99;
+    ctx.globalAlpha = Math.max(0, 1 - p.life / p.max); ctx.fillStyle = p.c;
+    if (p.conf) {
+      p.rot += .15; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.scale(1, Math.cos(p.rot * 2)); ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx.restore();
+    } else {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.life * .2);
+      ctx.shadowColor = p.c; ctx.shadowBlur = 8; ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const r = i % 2 ? p.size * .5 : p.size * 1.4, a = i * Math.PI / 4;
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ======================================================
+   WEB AUDIO SYNTH & EVENT BINDINGS
+====================================================== */
+function ac() {
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// One synthesized note: freq (Hz), duration (s), waveform, volume, start delay (s)
+function tone(freq, dur, type = 'triangle', vol = .06, delay = 0) {
+  if (!sound) return;
+  try {
+    const c = ac(), t0 = c.currentTime + delay;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.start(t0); o.stop(t0 + dur + .02);
+  } catch (e) {}
+}
+const beep = (f, d) => tone(f, d);
+const N = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, E6: 1318.5, G6: 1568 };
+
+const sfx = {
+  click() { tone(660, .06, 'sine', .05); },
+  // bright sparkle chime that climbs as the tree fills up; special decorations get an extra shimmer
+  place(id, n) {
+    const base = 520 + n * 9;
+    tone(base, .16, 'triangle', .07);
+    tone(base * 1.5, .22, 'sine', .04, .05);
+    if (id === 'topper' || id === 'crown') { tone(N.C6, .3, 'sine', .05, .08); tone(N.E6, .35, 'sine', .04, .16); }
+    if (id === 'gift') tone(200, .09, 'square', .03);
+    if (id === 'light') { tone(N.G5, .12, 'sine', .05); tone(N.C6, .2, 'sine', .05, .08); }
+  },
+  error() { tone(180, .14, 'sawtooth', .04); tone(140, .18, 'sawtooth', .035, .09); },
+  tick(left) { tone(left <= 3 ? 1100 : 900, .05, 'square', .03); },
+  go() { tone(N.C5, .1, 'triangle', .06); tone(N.E5, .1, 'triangle', .06, .1); tone(N.G5, .22, 'triangle', .07, .2); },
+  win() { [N.C5, N.E5, N.G5, N.C6, N.G5, N.C6, N.E6].forEach((f, i) => tone(f, .28, 'triangle', .07, i * .13)); tone(N.G6, .6, 'sine', .05, .95); },
+  lose() { [N.G5, 440, 349, 262].forEach((f, i) => tone(f, .3, 'sine', .06, i * .2)); },
+  unlock() { [N.E5, N.G5, N.C6, N.E6].forEach((f, i) => tone(f, .2, 'sine', .06, i * .09)); },
+  pop() { tone(900, .05, 'sine', .04); tone(1300, .06, 'sine', .03, .04); }
+};
+
+/* Gentle original background melody (soft pentatonic music-box loop) */
+const MELODY = [N.E5, N.G5, N.A5, N.G5, N.E5, N.D5, N.E5, 0, N.G5, N.A5, N.C6, N.A5, N.G5, N.E5, N.D5, 0,
+                N.C5, N.E5, N.G5, N.E5, N.D5, N.E5, N.G5, 0, N.A5, N.G5, N.E5, N.D5, N.C5, 0, 0, 0];
+let musicTimer = null, musicStep = 0;
+function startMusic() {
+  stopMusic();
+  if (!sound) return;
+  musicTimer = setInterval(() => {
+    if (document.hidden) return;
+    const f = MELODY[musicStep++ % MELODY.length];
+    if (f) { tone(f, .9, 'sine', .022); tone(f / 2, .9, 'sine', .012); }
+  }, 420);
+}
+function stopMusic() { clearInterval(musicTimer); musicTimer = null; }
+
+function syncSoundUI() {
+  $('soundBtnM').textContent = '♫ Sound: ' + (sound ? 'On' : 'Off');
+  $('soundBtn').textContent = '♫ ' + (sound ? 'On' : 'Off');
+}
+function toggleSound() {
+  sound = !sound;
+  save.sound = sound; persist();
+  syncSoundUI();
+  if (sound) { sfx.unlock(); startMusic(); } else stopMusic();
+}
+
+// Browsers only allow audio after a tap/click, so wake the audio engine on the first interaction
+addEventListener('pointerdown', function firstTouch() {
+  removeEventListener('pointerdown', firstTouch);
+  if (sound) { try { ac(); } catch (e) {} startMusic(); }
+}, { once: true });
+syncSoundUI();
+
+$('soundBtnM').onclick = toggleSound;
+$('soundBtn').onclick = toggleSound;
+$('backBtn').onclick = backToMenu;
+$('startBtn').onclick = start;
+$('resetBtn').onclick = reset;
+
+document.querySelectorAll('.level').forEach(b => b.addEventListener('click', () => {
+  const n = +b.dataset.level;
+  if (n > unlockedLevel(world)) {
+    showModal('🔒', 'LEVEL LOCKED', 'Complete the previous level first to unlock this challenge!', [['GOT IT', 'primary', () => {}]]);
+    return;
+  }
+  level = n;
+  reset();
+}));
+
+buildMenu();
+})();
+</script>
+</body>
+</html>
