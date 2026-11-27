@@ -1,0 +1,1953 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#78d3ef">
+<title>Hopscotch Adventure 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #173b37;
+  --accent: #ff9f2e;
+  --card-bg: rgba(255, 255, 255, 0.94);
+}
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Nunito', ui-rounded, system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #67ccf5 0%, #d8f8e8 100%);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* HUD Top Bar */
+.hud {
+  position: fixed;
+  top: env(safe-area-inset-top, 10px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  pointer-events: none;
+  z-index: 5;
+}
+.hud-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pill {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 2.5px solid #ffffff;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(35, 95, 78, 0.2), 0 8px 20px rgba(0,0,0,0.08);
+  font-size: clamp(12px, 3.4vw, 15px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.icon-btn {
+  pointer-events: auto;
+  border: 2.5px solid #fff;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 0 rgba(35, 95, 78, 0.22);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.icon-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(35, 95, 78, 0.22);
+}
+
+/* Progress Bar */
+#prog-wrap {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 10px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(290px, 68vw);
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+}
+#prog {
+  width: 100%;
+  height: 12px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 2px solid #fff;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+#prog i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff7eb3, #ffdf6b, #5ce18c, #5cc2ff);
+  border-radius: 99px;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#step-label {
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(18, 66, 56, 0.7);
+  margin-top: 3px;
+}
+
+/* Overlays & Cards */
+.panel {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(16, 48, 45, 0.52);
+  backdrop-filter: blur(7px);
+  z-index: 20;
+  overflow-y: auto;
+}
+.card {
+  width: min(460px, 100%);
+  background: linear-gradient(170deg, #ffffff 0%, #effef6 100%);
+  border: 4px solid #ffffff;
+  border-radius: 30px;
+  padding: 20px 20px 22px;
+  text-align: center;
+  box-shadow: 0 14px 0 rgba(36, 107, 88, 0.35), 0 25px 55px rgba(10, 35, 30, 0.45);
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+h1 {
+  font-size: clamp(26px, 7.5vw, 38px);
+  line-height: 1.05;
+  margin: 4px 0 8px;
+  color: #13785d;
+  text-shadow: 0 3px #c2f7d8;
+  font-weight: 900;
+}
+.subtitle {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #3c665d;
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+/* Badges & Daily Challenge */
+.meta-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.badge {
+  background: #fff7dc;
+  border: 2px solid #ffe08a;
+  color: #82520b;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 14px;
+}
+.badge.daily {
+  background: #ffeaf2;
+  border-color: #ffb8d2;
+  color: #8f244d;
+}
+
+/* Selectors */
+.section-title {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #507c72;
+  margin: 10px 0 6px;
+  text-align: left;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.opt-btn {
+  background: #ffffff;
+  border: 2.5px solid #d5eee4;
+  border-radius: 18px;
+  padding: 8px 6px;
+  cursor: pointer;
+  font: inherit;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.opt-btn .em { font-size: 24px; }
+.opt-btn .nm { font-size: 12px; font-weight: 900; color: #1b4d42; }
+.opt-btn .ds { font-size: 10px; font-weight: 700; color: #648c82; }
+.opt-btn.active {
+  background: linear-gradient(180deg, #fffbe6, #ffefc2);
+  border-color: #ffb038;
+  box-shadow: 0 4px 0 #e59824;
+  transform: translateY(-2px);
+}
+
+/* Level Cards */
+.lvl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.lvl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 2.5px solid #d5eee4;
+  border-radius: 18px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: all 0.15s;
+}
+.lvl-btn.active {
+  background: linear-gradient(90deg, #eafff3, #fff9db);
+  border-color: #3cc484;
+  box-shadow: 0 4px 0 #2b9c67;
+}
+.lvl-info strong {
+  display: block;
+  font-size: 14px;
+  color: #164a3e;
+}
+.lvl-info span {
+  font-size: 11.5px;
+  color: #557d73;
+  font-weight: 700;
+}
+.tag {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 9px;
+  border-radius: 10px;
+}
+.tag.easy { background: #d6f9e4; color: #167a44; }
+.tag.med { background: #fff0cc; color: #9c6208; }
+.tag.hard { background: #ffe0e6; color: #a8203e; }
+
+/* Primary CTA Button */
+button.primary {
+  width: 100%;
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffe373 0%, #ffb336 100%);
+  color: #5e3706;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 900;
+  padding: 14px 24px;
+  box-shadow: 0 6px 0 #d4821e, 0 10px 20px rgba(212, 130, 30, 0.3);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+button.primary:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #d4821e;
+}
+button.secondary {
+  margin-top: 8px;
+  width: 100%;
+  border: 2px solid #cbe8dc;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #256354;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px;
+  cursor: pointer;
+}
+
+/* Touch Controls */
+#controls {
+  position: fixed;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 16px;
+  pointer-events: none;
+  z-index: 6;
+}
+.ctrl {
+  pointer-events: auto;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  border: 3px solid #ffffff;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 0 rgba(36, 107, 88, 0.32), 0 10px 20px rgba(0,0,0,0.12);
+  font-size: 26px;
+  font-weight: 900;
+  color: #1c6b57;
+  touch-action: none;
+  cursor: pointer;
+}
+.ctrl.jump {
+  width: 112px;
+  height: 84px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffe77a 0%, #ffb53d 100%);
+  color: #633b05;
+  font-size: 19px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 7px 0 #cf811d, 0 12px 24px rgba(207, 129, 29, 0.35);
+}
+.ctrl:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(36, 107, 88, 0.32);
+}
+
+/* Toast Notification */
+#toast {
+  position: fixed;
+  left: 50%;
+  top: 21%;
+  transform: translate(-50%, -12px) scale(0.92);
+  opacity: 0;
+  background: linear-gradient(180deg, #ffffff, #fffbe8);
+  border: 2.5px solid #ffd56b;
+  color: #7d4c08;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: 0 6px 0 rgba(186, 130, 32, 0.25);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 15;
+}
+#toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+/* Premium */
+.tag.lock { background: linear-gradient(180deg,#ffe373,#ffb336); color: #5e3706; }
+.lvl-btn.locked { background: linear-gradient(90deg,#f7f4ff,#fff5dc); border-color: #e6d3a0; }
+.lvl-btn.locked .lvl-info strong::after { content: ' 🔒'; }
+.feature-list { list-style: none; margin: 0 0 12px; padding: 0; text-align: left; font-size: 13.5px; font-weight: 800; color: #2d5a4e; }
+.feature-list li { padding: 5px 0 5px 4px; }
+.price-tag { display: inline-block; background: #fff0cc; border: 2px solid #ffd56b; color: #7d4c08; font-weight: 900; border-radius: 14px; padding: 5px 14px; margin-bottom: 12px; font-size: 14px; }
+.code-row { display: flex; gap: 8px; margin-top: 10px; }
+.code-row input { flex: 1; min-width: 0; border: 2.5px solid #cbe8dc; border-radius: 14px; padding: 10px 12px; font: inherit; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #164a3e; -webkit-user-select: text; user-select: text; }
+.code-row button { border: 0; border-radius: 14px; background: #3cc484; color: #fff; font: inherit; font-weight: 900; padding: 0 16px; cursor: pointer; box-shadow: 0 4px 0 #2b9c67; }
+.code-msg { min-height: 18px; margin-top: 6px; font-size: 12px; font-weight: 800; color: #a8203e; }
+.code-msg.ok { color: #167a44; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="hud-group">
+    <button class="icon-btn" id="homeBtn" title="Home" aria-label="Home">🏠</button>
+    <div class="pill" id="levelPill">🌈 Level 1/3</div>
+  </div>
+  <div class="hud-group">
+    <div class="pill" id="scorePill">⭐ 0</div>
+    <button class="icon-btn" id="soundBtn" title="Toggle sound" aria-label="Sound">🔊</button>
+  </div>
+</div>
+
+<!-- Progress -->
+<div id="prog-wrap">
+  <div id="prog"><i></i></div>
+  <div id="step-label">Tile 0 / 5</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Controls -->
+<div id="controls">
+  <button class="ctrl" id="left" aria-label="Move left">◀</button>
+  <button class="ctrl jump" id="jump" aria-label="Jump">JUMP</button>
+  <button class="ctrl" id="right" aria-label="Move right">▶</button>
+</div>
+
+<!-- Start / Lobby Modal -->
+<div class="panel" id="startPanel">
+  <div class="card">
+    <div style="font-size:40px; line-height:1">🌈 ✨ 🐸</div>
+    <h1>HOPSCOTCH<br>ADVENTURE 3D</h1>
+    <p class="subtitle">Hold <b>◀ ▶</b> (or use <b>A / D</b> or swipe) to line up your jump. Press <b>JUMP</b> (Space) to hop across the colourful tiles and reach the Rainbow Gate!</p>
+
+    <div class="meta-row">
+      <div class="badge" id="bestBadge">🏆 Best: ⭐ 0</div>
+      <div class="badge daily" id="dailyBadge">🎁 Daily Challenge: +20⭐</div>
+    </div>
+
+    <div class="section-title">1. Choose Your Character</div>
+    <div class="grid-3" id="charGrid">
+      <button type="button" class="opt-btn active" data-char="frog">
+        <span class="em">🐸</span>
+        <span class="nm">Green Frog</span>
+        <span class="ds">Cheerful</span>
+      </button>
+      <button type="button" class="opt-btn" data-char="bunny">
+        <span class="em">🐰</span>
+        <span class="nm">White Bunny</span>
+        <span class="ds">Adorable</span>
+      </button>
+      <button type="button" class="opt-btn" data-char="panda">
+        <span class="em">🐼</span>
+        <span class="nm">Panda</span>
+        <span class="ds">Playful</span>
+      </button>
+    </div>
+
+    <div class="section-title">2. Choose Your World</div>
+    <div class="grid-3" id="themeGrid">
+      <button type="button" class="opt-btn active" data-theme="0">
+        <span class="em">🌿</span>
+        <span class="nm">Meadow</span>
+        <span class="ds">Fresh</span>
+      </button>
+      <button type="button" class="opt-btn" data-theme="1">
+        <span class="em">🍭</span>
+        <span class="nm">Candy Land</span>
+        <span class="ds">Dreamy</span>
+      </button>
+      <button type="button" class="opt-btn" data-theme="2">
+        <span class="em">🔮</span>
+        <span class="nm">Enchanted</span>
+        <span class="ds">Magical</span>
+      </button>
+    </div>
+
+    <div class="section-title">3. Choose Your Level</div>
+    <div class="lvl-list" id="lvlList">
+      <button type="button" class="lvl-btn active" data-lvl="1">
+        <div class="lvl-info">
+          <strong>Level 1 – Little Jumper</strong>
+          <span>5 easy tiles, slower speed – perfect for beginners</span>
+        </div>
+        <span class="tag easy">Easy · FREE</span>
+      </button>
+      <button type="button" class="lvl-btn" data-lvl="2">
+        <div class="lvl-info">
+          <strong>Level 2 – Jumping Star</strong>
+          <span>8 tiles, double tiles, mud and sneaky snails</span>
+        </div>
+        <span class="tag med">Medium · FREE</span>
+      </button>
+      <button type="button" class="lvl-btn" id="lvl3Btn" data-lvl="3">
+        <div class="lvl-info">
+          <strong>Level 3 – Rainbow Challenge</strong>
+          <span>10 tiles, disappearing platforms and moving obstacles</span>
+        </div>
+        <span class="tag hard" id="lvl3Tag">Hard</span>
+      </button>
+    </div>
+
+    <button class="primary" id="startBtn">START HOPPING! 🚀</button>
+  </div>
+</div>
+
+<!-- End / Result Modal -->
+<div class="panel hidden" id="endPanel">
+  <div class="card">
+    <div id="endIcon" style="font-size:56px">🏆</div>
+    <h1 id="endTitle">LEVEL COMPLETE!</h1>
+    <p class="subtitle" id="endText"></p>
+    <div class="meta-row">
+      <div class="badge" id="endScoreBadge">⭐ Score: 0</div>
+      <div class="badge" id="endBestBadge">🏆 Best: 0</div>
+    </div>
+    <button class="primary" id="nextBtn">NEXT LEVEL</button>
+    <button class="secondary" id="menuBtn">🏠 Character & Level Select</button>
+  </div>
+</div>
+
+<!-- Premium Modal -->
+<div class="panel hidden" id="premiumPanel">
+  <div class="card">
+    <div style="font-size:52px;line-height:1">👑</div>
+    <h1>UNLOCK PREMIUM</h1>
+    <p class="subtitle">Levels 1 and 2 are free forever. Go Premium to take on the ultimate challenge!</p>
+    <ul class="feature-list">
+      <li>🌈 Level 3 – Rainbow Challenge (10 tiles)</li>
+      <li>💎 Vanishing crystal tiles &amp; moving platforms</li>
+      <li>🐌 Faster, trickier snails</li>
+      <li>👑 Become the Hopscotch Champion</li>
+    </ul>
+    <div class="price-tag" id="priceTag">One-time purchase · $2.99</div>
+    <button class="primary" id="buyBtn">UNLOCK PREMIUM 👑</button>
+    <div class="code-row">
+      <input id="codeInput" type="text" placeholder="Have an unlock code?" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button type="button" id="redeemBtn">Redeem</button>
+    </div>
+    <div class="code-msg" id="codeMsg"></div>
+    <button class="secondary" id="laterBtn">Maybe later</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  if (typeof THREE === 'undefined') {
+    document.body.insertAdjacentHTML('beforeend',
+      '<div style="position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;font:700 18px sans-serif;background:#fff;z-index:99">Please connect to the internet to load the 3D graphics (Three.js).</div>');
+    return;
+  }
+
+  /* =========================================================
+     1. CẤU HÌNH CẤP ĐỘ & CHỦ ĐỀ SÂN CHƠI
+     ========================================================= */
+  const U = 2.45;      // Đơn vị chiều ngang
+  const SP = 2.75;     // Khoảng cách giữa các hàng ô
+  const TD = 1.55;     // Chiều sâu mỗi ô
+  const MAX_LEVEL = 3;
+
+  const LEVEL_CONFIG = {
+    1: {
+      name: 'Little Jumper',
+      steps: 5,
+      hopTime: 0.62,
+      moveSpeed: 2.1,
+      snailSpeed: 0,
+      tileSpeed: 0
+    },
+    2: {
+      name: 'Jumping Star',
+      steps: 8,
+      hopTime: 0.55,
+      moveSpeed: 2.35,
+      snailSpeed: 1.7,
+      tileSpeed: 0
+    },
+    3: {
+      name: 'Rainbow Challenge',
+      steps: 10,
+      hopTime: 0.48,
+      moveSpeed: 2.6,
+      snailSpeed: 2.5,
+      tileSpeed: 1.85
+    }
+  };
+
+  const THEMES = [
+    {
+      name: 'Meadow',
+      skyTop: '#67ccf5',
+      skyBot: '#d8f8e8',
+      fog: 0xd8f8e8,
+      ground: 0x7be08c,
+      path: 0xb7f7ca,
+      border: 0x57c46f,
+      leaf: [0x45c46d, 0x6ce389, 0x35ab5c],
+      hill: 0x8be69c,
+      sparkle: 0xfff380,
+      tileTop: ['#fff9cc', '#ffd56b'],
+      tileSide: 0xf0b243
+    },
+    {
+      name: 'Candy Land',
+      skyTop: '#ff9ec7',
+      skyBot: '#fff0e6',
+      fog: 0xfff0e6,
+      ground: 0xffc4dc,
+      path: 0xfff2d6,
+      border: 0xff8cb8,
+      leaf: [0xff7eb3, 0xffa8cc, 0xc78bff],
+      hill: 0xffd6e8,
+      sparkle: 0xffffff,
+      tileTop: ['#fff0f7', '#ff9ec7'],
+      tileSide: 0xe86fa2
+    },
+    {
+      name: 'Enchanted',
+      skyTop: '#7c8cff',
+      skyBot: '#e3dcff',
+      fog: 0xe3dcff,
+      ground: 0x7fd4c9,
+      path: 0xdcd4ff,
+      border: 0x9b87ff,
+      leaf: [0x8c7aff, 0xb69cff, 0x5cd6e6],
+      hill: 0xa7a4ff,
+      sparkle: 0x80f5ff,
+      tileTop: ['#f4f0ff', '#b89eff'],
+      tileSide: 0x8467db
+    }
+  ];
+
+  /* =========================================================
+     2. TRẠNG THÁI TRÒ CHƠI & LƯU TRỮ
+     ========================================================= */
+  let selectedChar = 'frog';
+  let selectedTheme = 0;
+  let currentLevel = 1;
+  let score = 0;
+  let levelStartScore = 0;
+  let bestScore = 0;
+  let dailyDone = false;
+  let playing = false;
+  let muted = false;
+  let T = 0;
+  let lastTime = 0;
+  let totalSteps = 5;
+  let toastTimer = null;
+  let audioCtx = null;
+  let isPremium = false;
+  let premiumNext = false; // premium modal opened from the "next level" button
+
+  /* Premium config – replace with real payment integration (see window.HopscotchPay) */
+  const PREMIUM_LEVEL = 3;
+  const PREMIUM_CODES = ['HOP-PREMIUM-2026'];
+  const PREMIUM_KEY = 'hopPremium3d';
+
+  const todayKey = 'hopDaily_' + new Date().toISOString().slice(0, 10);
+  try {
+    bestScore = Number(localStorage.getItem('hopBest3d_vn')) || 0;
+    dailyDone = localStorage.getItem(todayKey) === '1';
+    isPremium = localStorage.getItem(PREMIUM_KEY) === '1';
+  } catch (e) {}
+
+  function refreshPremiumUI() {
+    const btn = $('lvl3Btn');
+    const tag = $('lvl3Tag');
+    btn.classList.toggle('locked', !isPremium);
+    tag.className = isPremium ? 'tag hard' : 'tag lock';
+    tag.textContent = isPremium ? 'Hard · PREMIUM 👑' : '🔒 Premium';
+  }
+
+  function openPremium(fromNext) {
+    premiumNext = !!fromNext;
+    $('codeInput').value = '';
+    $('codeMsg').textContent = '';
+    $('codeMsg').className = 'code-msg';
+    $('premiumPanel').classList.remove('hidden');
+  }
+
+  function closePremium() {
+    $('premiumPanel').classList.add('hidden');
+    if (premiumNext) {
+      premiumNext = false;
+      $('startPanel').classList.remove('hidden');
+    }
+  }
+
+  function grantPremium() {
+    isPremium = true;
+    try { localStorage.setItem(PREMIUM_KEY, '1'); } catch (e) {}
+    refreshPremiumUI();
+    $('premiumPanel').classList.add('hidden');
+    playVictoryFanfare();
+    showToast('👑 Premium unlocked! Level 3 is ready!');
+    if (premiumNext) {
+      premiumNext = false;
+      startLevel(PREMIUM_LEVEL);
+    }
+  }
+
+  function refreshMetaUI() {
+    $('bestBadge').textContent = `🏆 Best: ⭐ ${bestScore}`;
+    $('dailyBadge').textContent = dailyDone
+      ? '✅ Daily reward claimed!'
+      : '🎁 Daily Challenge: +20⭐';
+  }
+  refreshMetaUI();
+
+  /* =========================================================
+     3. ÂM THANH VUI NHỘN (WEB AUDIO API)
+     ========================================================= */
+  function playTone(freq = 520, dur = 0.09, type = 'sine', vol = 0.09, slideTo = null) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const now = audioCtx.currentTime;
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + dur);
+    } catch (e) {}
+  }
+
+  function playVictoryFanfare() {
+    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.22, 'triangle', 0.1), i * 110);
+    });
+  }
+
+  $('soundBtn').onclick = () => {
+    muted = !muted;
+    $('soundBtn').textContent = muted ? '🔇' : '🔊';
+  };
+
+  /* =========================================================
+     4. KHỞI TẠO THREE.JS & ÁNH SÁNG LUNG LINH
+     ========================================================= */
+  const renderer = new THREE.WebGLRenderer({ canvas: $('game'), antialias: true, alpha: true });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 220);
+  const lookTarget = new THREE.Vector3();
+
+  // Ánh sáng bầu trời + ánh sáng mặt trời ấm áp + đèn viền lung linh
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8de09b, 0.95);
+  scene.add(hemiLight);
+
+  const sunLight = new THREE.DirectionalLight(0xfff4d6, 1.05);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(1024, 1024);
+  Object.assign(sunLight.shadow.camera, {
+    left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 50
+  });
+  sunLight.shadow.bias = -0.0005;
+  scene.add(sunLight, sunLight.target);
+
+  const rimLight = new THREE.DirectionalLight(0xa8e6ff, 0.45);
+  rimLight.position.set(10, 8, -12);
+  scene.add(rimLight);
+
+  function onResize() {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.fov = camera.aspect < 0.8 ? 66 : 50;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onResize);
+  onResize();
+
+  const mat = (color, opts = {}) => new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.55,
+    metalness: 0.05,
+    ...opts
+  });
+
+  /* =========================================================
+     5. MÔ HÌNH 3D NHÂN VẬT & VẬT THỂ (PHONG CÁCH KAYKIT / KENNEY)
+     ========================================================= */
+  function createCharacterMesh(type) {
+    const root = new THREE.Group();
+    const body = new THREE.Group();
+    root.add(body);
+
+    const addPart = (geo, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, rz = 0) => {
+      const m = new THREE.Mesh(geo, material);
+      m.position.set(x, y, z);
+      m.scale.set(sx, sy, sz);
+      m.rotation.set(rx, 0, rz);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      body.add(m);
+      return m;
+    };
+
+    const white = mat(0xffffff, { roughness: 0.35 });
+    const black = mat(0x1b2b2b, { roughness: 0.25 });
+    const blush = mat(0xff8fa8, { roughness: 0.5 });
+
+    if (type === 'frog') {
+      const green = mat(0x52db67, { roughness: 0.45 });
+      const belly = mat(0xdcffc7, { roughness: 0.6 });
+      const crownGold = mat(0xffd645, { metalness: 0.35, roughness: 0.3, emissive: 0xff9d00, emissiveIntensity: 0.2 });
+
+      addPart(new THREE.SphereGeometry(0.52, 24, 18), green, 0, 0.52, 0, 1.02, 0.86, 1.05);
+      addPart(new THREE.SphereGeometry(0.39, 20, 14), belly, 0, 0.4, -0.22, 0.9, 0.65, 0.8);
+      // Vương miện hoàng tử ếch
+      addPart(new THREE.CylinderGeometry(0.16, 0.12, 0.14, 6), crownGold, 0, 1.02, -0.05);
+
+      for (const s of [-1, 1]) {
+        addPart(new THREE.SphereGeometry(0.18, 16, 14), white, s * 0.27, 0.96, -0.24);
+        addPart(new THREE.SphereGeometry(0.09, 12, 12), black, s * 0.27, 0.98, -0.39);
+        addPart(new THREE.SphereGeometry(0.032, 8, 8), white, s * 0.24, 1.02, -0.45);
+        addPart(new THREE.SphereGeometry(0.085, 10, 10), blush, s * 0.38, 0.63, -0.42, 1, 0.65, 0.5);
+        // Chân ếch
+        addPart(new THREE.SphereGeometry(0.2, 14, 12), green, s * 0.46, 0.22, 0.2, 0.8, 0.6, 1.35);
+        addPart(new THREE.SphereGeometry(0.13, 12, 10), green, s * 0.31, 0.1, -0.48, 1, 0.5, 1.2);
+      }
+      const smile = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.025, 8, 16, Math.PI), black);
+      smile.rotation.z = Math.PI;
+      smile.position.set(0, 0.64, -0.52);
+      body.add(smile);
+
+    } else if (type === 'bunny') {
+      const fur = mat(0xfff9fc, { roughness: 0.5 });
+      const pinkInner = mat(0xffa6c9, { roughness: 0.5 });
+      const ribbon = mat(0xff5e8e, { roughness: 0.35 });
+
+      addPart(new THREE.SphereGeometry(0.5, 24, 18), fur, 0, 0.52, 0, 0.96, 0.95, 0.98);
+      // Đuôi bông tròn
+      addPart(new THREE.SphereGeometry(0.18, 14, 12), white, 0, 0.35, 0.5);
+      // Nơ hồng xinh xắn
+      addPart(new THREE.SphereGeometry(0.09, 10, 10), ribbon, 0, 0.28, -0.48);
+
+      for (const s of [-1, 1]) {
+        // Tai thỏ dài
+        addPart(new THREE.SphereGeometry(0.13, 14, 14), fur, s * 0.2, 1.26, -0.05, 0.85, 2.7, 0.6, 0, s * -0.12);
+        addPart(new THREE.SphereGeometry(0.08, 12, 12), pinkInner, s * 0.2, 1.26, -0.09, 0.75, 2.3, 0.4, 0, s * -0.12);
+        // Mắt & má hồng
+        addPart(new THREE.SphereGeometry(0.085, 12, 12), black, s * 0.22, 0.72, -0.44);
+        addPart(new THREE.SphereGeometry(0.03, 8, 8), white, s * 0.2, 0.75, -0.5);
+        addPart(new THREE.SphereGeometry(0.085, 10, 10), blush, s * 0.33, 0.58, -0.42, 1, 0.65, 0.5);
+        // Bàn chân
+        addPart(new THREE.SphereGeometry(0.16, 12, 10), fur, s * 0.34, 0.12, -0.25, 0.9, 0.55, 1.3);
+      }
+      // Mũi thỏ hồng
+      addPart(new THREE.SphereGeometry(0.06, 10, 10), pinkInner, 0, 0.63, -0.5);
+
+    } else {
+      // Gấu trúc nhí (Panda)
+      const fur = mat(0xffffff, { roughness: 0.5 });
+      const dark = mat(0x232931, { roughness: 0.45 });
+      const bamboo = mat(0x5cd669, { roughness: 0.4 });
+
+      addPart(new THREE.SphereGeometry(0.53, 24, 18), fur, 0, 0.54, 0, 1.04, 0.92, 1.02);
+      // Đai đen quanh vai
+      addPart(new THREE.CylinderGeometry(0.47, 0.51, 0.26, 20), dark, 0, 0.44, 0);
+      // Cành trúc nhỏ bên hông
+      addPart(new THREE.CylinderGeometry(0.035, 0.035, 0.55, 8), bamboo, 0.55, 0.45, -0.15, 1, 1, 1, 0.3, -0.4);
+
+      for (const s of [-1, 1]) {
+        // Tai gấu tròn đen
+        addPart(new THREE.SphereGeometry(0.16, 14, 12), dark, s * 0.34, 1.0, -0.05);
+        // Quầng mắt gấu trúc
+        addPart(new THREE.SphereGeometry(0.14, 14, 12), dark, s * 0.22, 0.72, -0.43, 1.05, 0.85, 0.5, 0, s * 0.25);
+        addPart(new THREE.SphereGeometry(0.055, 10, 10), white, s * 0.21, 0.73, -0.49);
+        addPart(new THREE.SphereGeometry(0.03, 8, 8), black, s * 0.21, 0.73, -0.53);
+        addPart(new THREE.SphereGeometry(0.08, 10, 10), blush, s * 0.35, 0.56, -0.41, 1, 0.65, 0.5);
+        // Chân đen
+        addPart(new THREE.SphereGeometry(0.17, 12, 10), dark, s * 0.36, 0.13, -0.22, 0.95, 0.6, 1.25);
+      }
+      addPart(new THREE.SphereGeometry(0.065, 10, 10), dark, 0, 0.62, -0.52);
+    }
+
+    root.userData.body = body;
+    return root;
+  }
+
+  // Ngôi sao 3D lấp lánh
+  const starGeo = (() => {
+    const shape = new THREE.Shape();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 ? 0.24 : 0.54;
+      const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+      const x = Math.cos(a) * r;
+      const y = Math.sin(a) * r;
+      i === 0 ? shape.moveTo(x, y) : shape.lineTo(x, y);
+    }
+    shape.closePath();
+    const g = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.15,
+      bevelEnabled: true,
+      bevelSize: 0.045,
+      bevelThickness: 0.045,
+      bevelSegments: 2
+    });
+    g.center();
+    return g;
+  })();
+
+  const starMat = mat(0xffdf4d, {
+    emissive: 0xffa600,
+    emissiveIntensity: 0.65,
+    roughness: 0.25,
+    metalness: 0.3
+  });
+
+  // Ốc sên tinh nghịch
+  function createSnailMesh() {
+    const g = new THREE.Group();
+    const put = (geo, m, x, y, z) => {
+      const o = new THREE.Mesh(geo, m);
+      o.position.set(x, y, z);
+      o.castShadow = true;
+      g.add(o);
+      return o;
+    };
+    const bodyM = mat(0xffd7ba);
+    const shellM = mat(0xb26eff, { roughness: 0.35 });
+    const swirlM = mat(0xff9cd6, { emissive: 0xff6bb8, emissiveIntensity: 0.2 });
+
+    const foot = put(new THREE.SphereGeometry(0.31, 16, 12), bodyM, 0, 0.14, 0);
+    foot.scale.set(1.55, 0.45, 0.62);
+    put(new THREE.SphereGeometry(0.28, 18, 14), shellM, -0.1, 0.42, 0);
+    put(new THREE.TorusGeometry(0.15, 0.042, 10, 22), swirlM, -0.1, 0.42, 0.22);
+    put(new THREE.TorusGeometry(0.15, 0.042, 10, 22), swirlM, -0.1, 0.42, -0.22);
+
+    for (const s of [-1, 1]) {
+      put(new THREE.CylinderGeometry(0.016, 0.016, 0.24), bodyM, 0.38, 0.35, s * 0.09);
+      put(new THREE.SphereGeometry(0.055, 10, 10), mat(0xffffff), 0.38, 0.48, s * 0.09);
+      put(new THREE.SphereGeometry(0.028, 8, 8), mat(0x1b2b2b), 0.42, 0.48, s * 0.09);
+    }
+    return g;
+  }
+
+  /* =========================================================
+     6. TẠO TEXTURE & Ô NHẢY LÒ CÒ 3D LUNG LINH
+     ========================================================= */
+  const texCache = {};
+  function getTileTexture(num, kind, worldW, themeIdx) {
+    const key = `${num}_${kind}_${worldW.toFixed(2)}_${themeIdx}`;
+    if (texCache[key]) return texCache[key];
+
+    const cw = Math.max(64, Math.round((worldW - 0.08) * 110));
+    const ch = Math.round((TD - 0.08) * 110);
+    const c = document.createElement('canvas');
+    c.width = cw;
+    c.height = ch;
+    const ctx = c.getContext('2d');
+    const th = THEMES[themeIdx];
+
+    const grad = ctx.createLinearGradient(0, 0, 0, ch);
+    if (kind === 'mud') {
+      grad.addColorStop(0, '#8f633c');
+      grad.addColorStop(1, '#57361f');
+    } else if (kind === 'goal') {
+      grad.addColorStop(0, '#fff29c');
+      grad.addColorStop(0.5, '#ff9ec7');
+      grad.addColorStop(1, '#7de2ff');
+    } else if (kind === 'vanish') {
+      grad.addColorStop(0, '#d6f8ff');
+      grad.addColorStop(1, '#85d7ff');
+    } else {
+      grad.addColorStop(0, th.tileTop[0]);
+      grad.addColorStop(1, th.tileTop[1]);
+    }
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cw, ch);
+
+    // Viền trắng sáng bóng
+    ctx.strokeStyle = kind === 'vanish' ? '#ffffff' : 'rgba(255,255,255,0.92)';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, cw - 10, ch - 10);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (kind === 'mud') {
+      ctx.fillStyle = 'rgba(196, 148, 102, 0.55)';
+      for (let i = 0; i < 10; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * cw, Math.random() * ch, 5 + Math.random() * 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.font = '48px serif';
+      ctx.fillText('💦', cw / 2, ch / 2);
+    } else if (kind === 'goal') {
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(130, 50, 90, 0.45)';
+      ctx.shadowBlur = 8;
+      ctx.font = '900 44px Nunito, system-ui, sans-serif';
+      ctx.fillText('🌈 GOAL', cw / 2, ch / 2 + 2);
+    } else if (kind === 'vanish') {
+      // Họa tiết pha lê băng / ô biến mất
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([10, 8]);
+      ctx.strokeRect(14, 14, cw - 28, ch - 28);
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#135c8a';
+      ctx.font = '900 58px Nunito, system-ui, sans-serif';
+      ctx.fillText(`${num} ✨`, cw / 2, ch / 2 + 2);
+    } else {
+      ctx.fillStyle = '#7c4c16';
+      ctx.font = '900 66px Nunito, system-ui, sans-serif';
+      ctx.fillText(String(num), cw / 2, ch / 2 + 3);
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    texCache[key] = tex;
+    return tex;
+  }
+
+  function createTileMesh(xNorm, wNorm, kind, num, themeIdx) {
+    const group = new THREE.Group();
+    const worldW = wNorm * U;
+    const th = THEMES[themeIdx];
+
+    const sideColor = kind === 'mud'
+      ? 0x5c3a21
+      : kind === 'goal'
+        ? 0xff85b3
+        : kind === 'vanish'
+          ? 0x5ec2f0
+          : th.tileSide;
+
+    const baseMat = mat(sideColor, {
+      roughness: 0.4,
+      transparent: kind === 'vanish',
+      opacity: kind === 'vanish' ? 0.88 : 1
+    });
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(worldW, 0.38, TD), baseMat);
+    base.position.y = -0.19;
+    base.castShadow = true;
+    base.receiveShadow = true;
+
+    const topMat = new THREE.MeshStandardMaterial({
+      map: getTileTexture(num, kind, worldW, themeIdx),
+      roughness: 0.35,
+      metalness: 0.05,
+      transparent: kind === 'vanish',
+      opacity: kind === 'vanish' ? 0.92 : 1
+    });
+
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(worldW - 0.06, TD - 0.06), topMat);
+    top.rotation.x = -Math.PI / 2;
+    top.position.y = 0.008;
+    top.receiveShadow = true;
+
+    group.add(base, top);
+    group.position.x = xNorm * U;
+    group.userData = { baseMat, topMat };
+    return group;
+  }
+
+  /* =========================================================
+     7. HỆ THỐNG HẠT LẤP LÁNH & PHÁO HOA
+     ========================================================= */
+  const particles = [];
+  const pGeo = new THREE.SphereGeometry(0.085, 8, 8);
+
+  function spawnBurst(x, y, z, colors, count = 14, speed = 3.5) {
+    for (let i = 0; i < count; i++) {
+      const col = Array.isArray(colors) ? colors[i % colors.length] : colors;
+      const m = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true }));
+      const ang = Math.random() * Math.PI * 2;
+      const spd = speed * (0.35 + Math.random() * 0.8);
+      m.position.set(x, y, z);
+      m.userData = {
+        vel: new THREE.Vector3(Math.cos(ang) * spd, 2.2 + Math.random() * speed, Math.sin(ang) * spd),
+        life: 0.95
+      };
+      scene.add(m);
+      particles.push(m);
+    }
+  }
+
+  /* =========================================================
+     8. XÂY DỰNG MÀN CHƠI 3D THEO 3 CẤP ĐỘ
+     ========================================================= */
+  let levelGroup = null;
+  let rows = [];
+  let stars = [];
+  let snails = [];
+  let clouds = [];
+  let fireflies = [];
+  let gateStars = [];
+
+  let playerMesh = createCharacterMesh(selectedChar);
+  scene.add(playerMesh);
+
+  const player = {
+    row: 0,
+    x: 0,
+    hop: null,
+    fall: false,
+    vy: 0,
+    squash: 0,
+    tile: null
+  };
+
+  function rebuildCharacter() {
+    const pos = playerMesh.position.clone();
+    scene.remove(playerMesh);
+    playerMesh = createCharacterMesh(selectedChar);
+    playerMesh.position.copy(pos);
+    scene.add(playerMesh);
+  }
+
+  function buildLevel(lvl) {
+    if (levelGroup) scene.remove(levelGroup);
+    levelGroup = new THREE.Group();
+    scene.add(levelGroup);
+
+    rows = [];
+    stars = [];
+    snails = [];
+    clouds = [];
+    fireflies = [];
+    gateStars = [];
+
+    const cfg = LEVEL_CONFIG[lvl];
+    const th = THEMES[selectedTheme];
+    totalSteps = cfg.steps;
+
+    const worldLen = totalSteps * SP + 46;
+    const midZ = -(totalSteps * SP) / 2;
+
+    scene.fog = new THREE.Fog(th.fog, 28, 76);
+    document.body.style.background = `linear-gradient(180deg, ${th.skyTop} 0%, ${th.skyBot} 100%)`;
+
+    // Mặt cỏ chính
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(260, worldLen + 120),
+      mat(th.ground, { roughness: 0.95 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, -0.42, midZ);
+    ground.receiveShadow = true;
+    levelGroup.add(ground);
+
+    // Lối đi chính giữa & viền trang trí
+    const pathMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.8, worldLen),
+      mat(th.path, { roughness: 0.9 })
+    );
+    pathMesh.rotation.x = -Math.PI / 2;
+    pathMesh.position.set(0, -0.39, midZ - 3);
+    pathMesh.receiveShadow = true;
+    levelGroup.add(pathMesh);
+
+    for (const side of [-1, 1]) {
+      const trim = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28, 0.14, worldLen),
+        mat(th.border, { roughness: 0.6 })
+      );
+      trim.position.set(side * 3.45, -0.34, midZ - 3);
+      trim.receiveShadow = true;
+      levelGroup.add(trim);
+    }
+
+    // Tạo từng hàng ô nhảy lò cò
+    for (let i = 0; i <= totalSteps; i++) {
+      const z = -i * SP;
+      const row = { z, tiles: [], snail: null };
+      let defs = [];
+
+      if (i === 0) {
+        defs = [[0, 1.15, 'safe']];
+      } else if (i === totalSteps) {
+        defs = [[0, 2.05, 'goal']];
+      } else if (lvl === 1) {
+        // CẤP 1: 5 ô - đường đi đơn giản, kết hợp ô đôi kinh điển, không bẫy
+        if (i === 2 || i === 4) {
+          defs = [[-0.52, 0.85, 'safe'], [0.52, 0.85, 'safe']];
+        } else {
+          defs = [[0, 1.05, 'safe']];
+        }
+      } else if (lvl === 2) {
+        // CẤP 2: 8 ô - có ô đôi, xuất hiện ô bùn lầy & ốc sên
+        if (i === 2 || i === 5 || i === 7) {
+          const mudIdx = i === 5 ? 1 : 0;
+          defs = [
+            [-0.54, 0.84, mudIdx === 0 ? 'mud' : 'safe'],
+            [0.54, 0.84, mudIdx === 1 ? 'mud' : 'safe']
+          ];
+        } else {
+          defs = [[0, 1.0, 'safe']];
+        }
+      } else {
+        // CẤP 3: 10 ô - có ô biến mất (vanish), ô di chuyển & ốc sên nhanh
+        if (i === 2 || i === 6) {
+          defs = [[-0.55, 0.82, 'safe'], [0.55, 0.82, 'safe']];
+        } else if (i === 4 || i === 8) {
+          const mudIdx = i === 4 ? 0 : 2;
+          defs = [-0.66, 0, 0.66].map((x, idx) => [x, 0.58, idx === mudIdx ? 'mud' : 'safe']);
+        } else if (i === 3 || i === 7 || i === 9) {
+          defs = [[0, 0.96, 'vanish']];
+        } else {
+          defs = [[0, 0.95, 'safe']];
+        }
+      }
+
+      const isSingleSafe = defs.length === 1 && defs[0][2] === 'safe' && i > 1 && i < totalSteps;
+      const isMover = lvl === 3 && isSingleSafe && (i === 1 || i === 5);
+
+      defs.forEach(([xNorm, wNorm, kind]) => {
+        const tileObj = {
+          x0: xNorm,
+          x: xNorm,
+          dx: 0,
+          w: wNorm,
+          kind,
+          amp: isMover ? 0.34 : 0,
+          speed: cfg.tileSpeed,
+          phase: i * 1.3,
+          vanishTimer: -1, // kích hoạt khi nhân vật đáp xuống ô 'vanish'
+          gone: false,
+          mesh: createTileMesh(xNorm, wNorm, kind, i, selectedTheme)
+        };
+        tileObj.mesh.position.z = z;
+        levelGroup.add(tileObj.mesh);
+        row.tiles.push(tileObj);
+      });
+
+      // Thêm ốc sên tinh nghịch ở Cấp 2 và Cấp 3
+      const addSnail =
+        (lvl === 2 && (i === 3 || i === 6)) ||
+        (lvl === 3 && (i === 2 || i === 6));
+
+      if (addSnail) {
+        const snailObj = {
+          mesh: createSnailMesh(),
+          phase: i * 1.7,
+          speed: cfg.snailSpeed,
+          sx: 0
+        };
+        snailObj.mesh.position.set(0, 0, z);
+        levelGroup.add(snailObj.mesh);
+        row.snail = snailObj;
+        snails.push(snailObj);
+      }
+
+      rows.push(row);
+    }
+
+    // Đặt sao thu thập lấp lánh trên đường nhảy
+    for (let i = 1; i <= totalSteps; i++) {
+      const r = rows[i];
+      const safeTiles = r.tiles.filter(t => t.kind === 'safe' || t.kind === 'vanish');
+      if (!safeTiles.length) continue;
+      // Cấp 1 nhiều sao hơn để bé dễ thu thập
+      if (lvl === 1 || i % 2 === 1 || i === totalSteps) {
+        const targetTile = safeTiles[i % safeTiles.length];
+        const sMesh = new THREE.Mesh(starGeo, starMat);
+        sMesh.position.set(targetTile.x0 * U, 1.85, -(i - 0.5) * SP);
+        sMesh.castShadow = true;
+        sMesh.userData.got = false;
+        levelGroup.add(sMesh);
+        stars.push(sMesh);
+      }
+    }
+
+    // CỔNG CẦU VỒNG LUNG LINH Ở ĐÍCH
+    const goalZ = -totalSteps * SP - 1.7;
+    const rainbowGroup = new THREE.Group();
+    const rbColors = ['#ff5e7e', '#ffab40', '#ffe64d', '#52e082', '#4dc3ff', '#a86eff'];
+    rbColors.forEach((col, idx) => {
+      const arc = new THREE.Mesh(
+        new THREE.TorusGeometry(4.8 - idx * 0.32, 0.18, 12, 52, Math.PI),
+        mat(col, { emissive: col, emissiveIntensity: 0.32, roughness: 0.3 })
+      );
+      rainbowGroup.add(arc);
+    });
+    rainbowGroup.position.set(0, -0.2, goalZ);
+    levelGroup.add(rainbowGroup);
+
+    // Đám mây chân cầu vồng + ngôi sao xoay quanh cổng
+    for (const s of [-1, 1]) {
+      const cloudBase = new THREE.Group();
+      for (let k = 0; k < 4; k++) {
+        const puff = new THREE.Mesh(
+          new THREE.SphereGeometry(0.75 + (k % 2) * 0.2, 14, 12),
+          mat(0xffffff, { roughness: 0.9 })
+        );
+        puff.position.set(k * 0.55 - 0.8, 0.1 + (k % 2) * 0.18, (k % 2) * 0.2);
+        cloudBase.add(puff);
+      }
+      cloudBase.position.set(s * 4.3, 0, goalZ);
+      levelGroup.add(cloudBase);
+
+      const gStar = new THREE.Mesh(starGeo, starMat);
+      gStar.scale.setScalar(1.35);
+      gStar.position.set(s * 3.2, 3.6, goalZ + 0.4);
+      levelGroup.add(gStar);
+      gateStars.push(gStar);
+    }
+
+    // Cảnh quan xung quanh: Cây low-poly 3 tầng, nấm đỏ chấm bi, hoa phát sáng, đồi pastel, mây trôi
+    const flowerCols = [0xff7eb3, 0xffe066, 0xffffff, 0xc38fff, 0xff9a52];
+    for (let k = 0; k < worldLen / 2.8; k++) {
+      for (const s of [-1, 1]) {
+        // Cây thông/tán tròn low-poly
+        if (Math.random() < 0.78) {
+          const tree = new THREE.Group();
+          const scale = 0.85 + Math.random() * 0.85;
+          const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.18, 0.28, 1.35, 8),
+            mat(0x9c6b43, { roughness: 0.85 })
+          );
+          trunk.position.y = 0.65;
+          trunk.castShadow = true;
+          tree.add(trunk);
+
+          const leafMat = mat(th.leaf[k % th.leaf.length], { roughness: 0.65 });
+          for (let j = 0; j < 3; j++) {
+            const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.0 - j * 0.22, 1), leafMat);
+            crown.position.y = 1.55 + j * 0.72;
+            crown.castShadow = true;
+            tree.add(crown);
+          }
+          tree.scale.setScalar(scale);
+          tree.position.set(s * (5.4 + Math.random() * 9.5), -0.35, -k * 2.8 + 8);
+          levelGroup.add(tree);
+        }
+
+        // Nấm thần tiên hoặc hoa rực rỡ ven lối đi
+        if (Math.random() < 0.85) {
+          if (k % 3 === 0) {
+            const mush = new THREE.Group();
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.35, 10), mat(0xfff5e6));
+            stem.position.y = 0.17;
+            const cap = new THREE.Mesh(
+              new THREE.SphereGeometry(0.28, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+              mat(0xff5e7e, { emissive: 0xff2e55, emissiveIntensity: 0.15 })
+            );
+            cap.position.y = 0.32;
+            mush.add(stem, cap);
+            mush.position.set(s * (4.1 + Math.random() * 1.4), -0.38, -k * 2.8 + 6);
+            levelGroup.add(mush);
+          } else {
+            const fl = new THREE.Group();
+            const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.42), mat(0x3fb568));
+            st.position.y = 0.2;
+            const fCol = flowerCols[(k + (s > 0 ? 2 : 0)) % flowerCols.length];
+            const head = new THREE.Mesh(
+              new THREE.SphereGeometry(0.15, 10, 10),
+              mat(fCol, { emissive: fCol, emissiveIntensity: 0.25 })
+            );
+            head.position.y = 0.46;
+            fl.add(st, head);
+            fl.position.set(s * (3.9 + Math.random() * 1.6), -0.38, -k * 2.8 + 7);
+            levelGroup.add(fl);
+          }
+        }
+      }
+    }
+
+    // Đồi pastel xa xa
+    for (let k = 0; k < 10; k++) {
+      const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), mat(th.hill, { roughness: 1 }));
+      hill.scale.set(11 + Math.random() * 8, 5.5 + Math.random() * 5, 10);
+      hill.position.set((k % 2 ? 1 : -1) * (34 + Math.random() * 18), -2.6, midZ - worldLen / 2 + k * (worldLen / 9));
+      levelGroup.add(hill);
+    }
+
+    // Mây bồng bềnh trên bầu trời
+    for (let k = 0; k < 14; k++) {
+      const cl = new THREE.Group();
+      for (let j = 0; j < 4; j++) {
+        const b = new THREE.Mesh(
+          new THREE.SphereGeometry(1.25 + Math.random() * 0.7, 12, 10),
+          mat(0xffffff, { roughness: 1, transparent: true, opacity: 0.92 })
+        );
+        b.position.set(j * 1.45, Math.random() * 0.55, Math.random() * 0.8);
+        cl.add(b);
+      }
+      cl.position.set(-45 + Math.random() * 90, 12 + Math.random() * 9, midZ - worldLen / 2 + Math.random() * worldLen);
+      levelGroup.add(cl);
+      clouds.push(cl);
+    }
+
+    // Hạt bụi tiên lấp lánh bay lơ lửng trong không trung
+    const ffGeo = new THREE.SphereGeometry(0.07, 6, 6);
+    const ffMat = new THREE.MeshBasicMaterial({ color: th.sparkle, transparent: true, opacity: 0.85 });
+    for (let k = 0; k < 42; k++) {
+      const ff = new THREE.Mesh(ffGeo, ffMat);
+      ff.position.set(
+        (Math.random() - 0.5) * 16,
+        0.5 + Math.random() * 5,
+        4 - Math.random() * (worldLen - 6)
+      );
+      ff.userData = { baseY: ff.position.y, phase: Math.random() * 6.28 };
+      levelGroup.add(ff);
+      fireflies.push(ff);
+    }
+
+    $('levelPill').textContent = `🌈 Level ${lvl}/${MAX_LEVEL}`;
+    $('scorePill').textContent = `⭐ ${score}`;
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const pct = Math.min(100, (player.row / totalSteps) * 100);
+    $('prog').firstElementChild.style.width = pct + '%';
+    $('step-label').textContent = `Tile ${player.row} / ${totalSteps}`;
+  }
+
+  function resetPlayer() {
+    Object.assign(player, {
+      row: 0,
+      x: 0,
+      hop: null,
+      fall: false,
+      vy: 0,
+      squash: 0,
+      tile: rows[0].tiles[0]
+    });
+    playerMesh.position.set(0, 0, 0);
+    playerMesh.rotation.set(0, 0, 0);
+    playerMesh.scale.set(1, 1, 1);
+    camera.position.set(0, 5.1, 6.8);
+    lookTarget.set(0, 0.5, -4);
+  }
+
+  function startLevel(lvl) {
+    if (lvl >= PREMIUM_LEVEL && !isPremium) {
+      playing = false;
+      openPremium(true);
+      return;
+    }
+    currentLevel = lvl;
+    levelStartScore = score;
+    buildLevel(lvl);
+    resetPlayer();
+    playing = true;
+    lastTime = performance.now();
+  }
+
+  /* =========================================================
+     9. LOGIC ĐIỀU KHIỂN & VA CHẠM
+     ========================================================= */
+  function showToast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1200);
+  }
+
+  function addScore(pts) {
+    score += pts;
+    $('scorePill').textContent = `⭐ ${score}`;
+    if (score > bestScore) {
+      bestScore = score;
+      try { localStorage.setItem('hopBest3d_vn', String(bestScore)); } catch (e) {}
+      refreshMetaUI();
+    }
+  }
+
+  function triggerJump() {
+    if (!playing || player.hop || player.fall || player.row >= rows.length - 1) return;
+    player.hop = {
+      t: 0,
+      z0: rows[player.row].z,
+      z1: rows[player.row + 1].z
+    };
+    player.tile = null;
+    player.squash = -1;
+    playTone(540, 0.11, 'sine', 0.1, 780);
+  }
+
+  function moveHorizontal(delta) {
+    if (playing && !player.fall) {
+      player.x = Math.max(-1.05, Math.min(1.05, player.x + delta));
+    }
+  }
+
+  function triggerFail(message, isMud) {
+    if (player.fall) return;
+    player.fall = true;
+    player.vy = isMud ? 2.2 : 3.2;
+    playing = false;
+    playTone(220, 0.35, 'sawtooth', 0.08, 95);
+    spawnBurst(
+      playerMesh.position.x,
+      0.25,
+      playerMesh.position.z,
+      isMud ? [0x8f633c, 0x57361f] : [0x67ccf5, 0xffffff],
+      18,
+      4.2
+    );
+    setTimeout(() => openEndModal(false, message), 920);
+  }
+
+  function handleLand() {
+    const nextRow = rows[player.row + 1];
+    let landedTile = null;
+    let bestDist = 99;
+
+    for (const t of nextRow.tiles) {
+      if (t.gone) continue;
+      const dist = Math.abs(player.x - t.x);
+      if (dist < t.w / 2 + 0.06 && dist < bestDist) {
+        bestDist = dist;
+        landedTile = t;
+      }
+    }
+
+    playerMesh.position.z = nextRow.z;
+    player.hop = null;
+    player.row++;
+    updateProgress();
+
+    if (!landedTile) {
+      triggerFail('Oops! You missed the tile!', false);
+      return;
+    }
+    if (landedTile.kind === 'mud') {
+      triggerFail('Slippery mud! Try to land on a safe tile.', true);
+      return;
+    }
+    if (nextRow.snail && Math.abs(player.x - nextRow.snail.sx) < 0.28) {
+      triggerFail('You bumped into a mischievous snail!', false);
+      return;
+    }
+
+    player.tile = landedTile;
+    player.squash = 1;
+    playTone(420, 0.07, 'triangle', 0.09);
+    spawnBurst(playerMesh.position.x, 0.12, nextRow.z, 0xffffff, 7, 1.8);
+    addScore(2);
+
+    // Nếu là ô biến mất ở Cấp 3 -> bắt đầu đếm ngược 1.45 giây
+    if (landedTile.kind === 'vanish' && landedTile.vanishTimer < 0) {
+      landedTile.vanishTimer = 1.45;
+      showToast('⚡ The crystal tile is about to disappear! Jump now!');
+      playTone(880, 0.08, 'square', 0.06);
+    }
+
+    if (landedTile.kind === 'goal') {
+      handleWin();
+      return;
+    }
+
+    // Thưởng nhảy chuẩn tâm ô
+    if (Math.abs(player.x - landedTile.x) < 0.1) {
+      addScore(5);
+      showToast('✨ PERFECT LANDING! +5⭐');
+      playTone(980, 0.12, 'triangle', 0.09);
+    }
+  }
+
+  function handleWin() {
+    playing = false;
+    let bonus = currentLevel * 15;
+    let extraMsg = `Amazing! You earned a +${bonus}⭐ finish bonus!`;
+
+    if (!dailyDone) {
+      dailyDone = true;
+      bonus += 20;
+      try { localStorage.setItem(todayKey, '1'); } catch (e) {}
+      refreshMetaUI();
+      extraMsg = `Level complete + Daily Challenge! You earned a sparkling +${bonus}⭐!`;
+    }
+
+    addScore(bonus);
+    playVictoryFanfare();
+    spawnBurst(
+      playerMesh.position.x,
+      1.2,
+      playerMesh.position.z,
+      ['#ff5e7e', '#ffab40', '#ffe64d', '#52e082', '#4dc3ff', '#a86eff'],
+      65,
+      6.5
+    );
+
+    setTimeout(() => {
+      const allCleared = currentLevel >= MAX_LEVEL;
+      openEndModal(
+        true,
+        allCleared
+          ? `Congratulations! You conquered all 3 levels of Hopscotch Adventure 3D! ${extraMsg}`
+          : extraMsg
+      );
+    }, 950);
+  }
+
+  function openEndModal(won, msg) {
+    const isFinalWin = won && currentLevel >= MAX_LEVEL;
+    $('endIcon').textContent = isFinalWin ? '👑' : won ? '🏆' : '💫';
+    $('endTitle').textContent = isFinalWin
+      ? 'HOPSCOTCH CHAMPION!'
+      : won
+        ? `LEVEL ${currentLevel} CLEARED!`
+        : 'TRY AGAIN!';
+    $('endText').textContent = msg;
+    $('endScoreBadge').textContent = `⭐ Score: ${score}`;
+    $('endBestBadge').textContent = `🏆 Best: ${bestScore}`;
+
+    const needsPremium = won && !isFinalWin && currentLevel + 1 >= PREMIUM_LEVEL && !isPremium;
+    if (needsPremium) {
+      $('endText').textContent = msg + ' Level 3 is a Premium level – unlock it to keep hopping!';
+    }
+
+    $('nextBtn').textContent = isFinalWin
+      ? 'PLAY AGAIN FROM THE START 🔄'
+      : needsPremium
+        ? 'UNLOCK LEVEL 3 👑'
+        : won
+          ? `NEXT LEVEL ${currentLevel + 1} 🚀`
+          : 'RETRY THIS LEVEL 🔁';
+
+    $('endPanel').classList.remove('hidden');
+    $('nextBtn').onclick = () => {
+      $('endPanel').classList.add('hidden');
+      if (isFinalWin) {
+        score = 0;
+        startLevel(1);
+      } else if (needsPremium) {
+        openPremium(true);
+      } else if (won) {
+        startLevel(currentLevel + 1);
+      } else {
+        score = levelStartScore;
+        startLevel(currentLevel);
+      }
+    };
+  }
+
+  /* =========================================================
+     10. VÒNG LẶP CẬP NHẬT & RENDER 60FPS
+     ========================================================= */
+  const keys = { left: false, right: false };
+
+  function update(dt) {
+    T += dt;
+    const cfg = LEVEL_CONFIG[currentLevel];
+
+    // Cập nhật ô di chuyển & ô biến mất
+    for (const r of rows) {
+      for (const t of r.tiles) {
+        if (t.amp && !t.gone) {
+          const nx = t.x0 + Math.sin(T * t.speed + t.phase) * t.amp;
+          t.dx = nx - t.x;
+          t.x = nx;
+          t.mesh.position.x = nx * U;
+        }
+        if (t.kind === 'vanish' && t.vanishTimer > 0 && !t.gone) {
+          t.vanishTimer -= dt;
+          // Rung lắc cảnh báo
+          t.mesh.position.x = t.x * U + Math.sin(T * 45) * 0.06;
+          t.mesh.userData.baseMat.opacity = Math.max(0.2, t.vanishTimer / 1.45);
+          t.mesh.userData.topMat.opacity = Math.max(0.2, t.vanishTimer / 1.45);
+
+          if (t.vanishTimer <= 0) {
+            t.gone = true;
+            t.mesh.visible = false;
+            spawnBurst(t.x * U, 0.1, r.z, [0x85d7ff, 0xffffff], 14, 3);
+            if (playing && !player.hop && player.tile === t) {
+              triggerFail('The crystal tile has vanished!', false);
+            }
+          }
+        }
+      }
+    }
+
+    // Ốc sên di chuyển
+    for (const s of snails) {
+      s.sx = Math.sin(T * s.speed + s.phase) * 0.34;
+      s.mesh.position.x = s.sx * U;
+      s.mesh.rotation.y = Math.cos(T * s.speed + s.phase) > 0 ? 0 : Math.PI;
+    }
+
+    // Ngôi sao xoay & nhấp nhô
+    stars.forEach((s, idx) => {
+      if (!s.userData.got) {
+        s.rotation.y += dt * 2.4;
+        s.position.y = 1.85 + Math.sin(T * 2.8 + idx) * 0.16;
+      }
+    });
+    gateStars.forEach((gs, idx) => {
+      gs.rotation.y += dt * (idx === 0 ? 2 : -2);
+    });
+
+    // Mây trôi & đom đóm lấp lánh
+    for (const cl of clouds) {
+      cl.position.x += dt * 0.65;
+      if (cl.position.x > 62) cl.position.x = -62;
+    }
+    for (const ff of fireflies) {
+      ff.position.y = ff.userData.baseY + Math.sin(T * 2.2 + ff.userData.phase) * 0.35;
+    }
+
+    // Di chuyển nhân vật
+    if (playing && !player.fall) {
+      const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+      if (dir !== 0) moveHorizontal(dir * dt * cfg.moveSpeed);
+      if (player.tile && !player.hop) {
+        player.x = Math.max(-1.05, Math.min(1.05, player.x + player.tile.dx));
+      }
+    }
+
+    // Hoạt ảnh nhảy / rơi / nhún người (squash & stretch)
+    if (player.hop) {
+      const h = player.hop;
+      h.t += dt / cfg.hopTime;
+      if (h.t >= 1) {
+        handleLand();
+      } else {
+        playerMesh.position.z = h.z0 + (h.z1 - h.z0) * h.t;
+        playerMesh.position.y = Math.sin(Math.PI * h.t) * 1.55;
+        playerMesh.rotation.x = Math.cos(Math.PI * h.t) * 0.38;
+        playerMesh.scale.set(0.9, 1.15, 0.9);
+      }
+    } else if (player.fall) {
+      player.vy -= 19 * dt;
+      playerMesh.position.y += player.vy * dt;
+      playerMesh.rotation.z += dt * 6.5;
+      playerMesh.rotation.x += dt * 3.5;
+    } else {
+      playerMesh.position.y = 0;
+      playerMesh.rotation.x = 0;
+      player.squash *= Math.pow(0.0008, dt);
+      const q = player.squash;
+      const idle = Math.sin(T * 5.5) * 0.025;
+      playerMesh.scale.set(1 + 0.22 * q - idle, 1 - 0.34 * q + idle, 1 + 0.22 * q - idle);
+    }
+    playerMesh.position.x = player.x * U;
+
+    // Cập nhật hạt pháo hoa / bụi
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      const d = p.userData;
+      d.vel.y -= 9.5 * dt;
+      p.position.addScaledVector(d.vel, dt);
+      d.life -= dt;
+      const ratio = Math.max(0.01, d.life / 0.95);
+      p.scale.setScalar(ratio);
+      p.material.opacity = ratio;
+      if (d.life <= 0) {
+        scene.remove(p);
+        p.material.dispose();
+        particles.splice(i, 1);
+      }
+    }
+
+    // Ăn sao trên không trung
+    if (playing) {
+      const pPos = new THREE.Vector3(playerMesh.position.x, playerMesh.position.y + 0.7, playerMesh.position.z);
+      for (const s of stars) {
+        if (!s.userData.got && s.position.distanceTo(pPos) < 1.1) {
+          s.userData.got = true;
+          s.visible = false;
+          addScore(10);
+          showToast('⭐ STAR COLLECTED! +10⭐');
+          playTone(880, 0.14, 'sine', 0.1, 1320);
+          spawnBurst(s.position.x, s.position.y, s.position.z, [0xffdf4d, 0xffffff], 14, 3.2);
+        }
+      }
+    }
+
+    // Camera bám theo mượt mà
+    const isPortrait = camera.aspect < 0.8;
+    const lerpK = Math.min(1, dt * 4.5);
+    const fx = playerMesh.position.x;
+    const fz = playerMesh.position.z;
+
+    camera.position.x += (fx * 0.48 - camera.position.x) * lerpK;
+    camera.position.y += ((isPortrait ? 6.7 : 5.0) + playerMesh.position.y * 0.16 - camera.position.y) * lerpK;
+    camera.position.z += (fz + (isPortrait ? 8.8 : 6.8) - camera.position.z) * lerpK;
+
+    lookTarget.x += (fx * 0.3 - lookTarget.x) * lerpK;
+    lookTarget.z += (fz - 4.6 - lookTarget.z) * lerpK;
+    lookTarget.y = 0.45;
+    camera.lookAt(lookTarget);
+
+    sunLight.position.set(fx - 8, 15, fz + 7);
+    sunLight.target.position.set(fx, 0, fz - 2);
+
+    renderer.render(scene, camera);
+  }
+
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000 || 0, 0.05);
+    lastTime = now;
+    update(dt);
+    requestAnimationFrame(loop);
+  }
+
+  /* =========================================================
+     11. SỰ KIỆN GIAO DIỆN, BÀN PHÍM & CẢM ỨNG
+     ========================================================= */
+  function bindHoldButton(id, dirKey) {
+    const btn = $(id);
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      keys[dirKey] = true;
+      try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev =>
+      btn.addEventListener(ev, () => { keys[dirKey] = false; })
+    );
+  }
+  bindHoldButton('left', 'left');
+  bindHoldButton('right', 'right');
+  $('jump').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    triggerJump();
+  });
+
+  // Vuốt cảm ứng trên màn hình
+  let touchStartX = 0;
+  const canvas = $('game');
+  canvas.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+  canvas.addEventListener('touchend', e => {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 28) {
+      moveHorizontal(diff > 0 ? 0.38 : -0.38);
+    }
+  }, { passive: true });
+
+  // Bàn phím
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      e.preventDefault();
+      triggerJump();
+    }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+  });
+
+  // Chọn nhân vật
+  $('charGrid').querySelectorAll('.opt-btn').forEach(btn => {
+    btn.onclick = () => {
+      $('charGrid').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedChar = btn.dataset.char;
+      rebuildCharacter();
+      playTone(660, 0.08, 'sine', 0.08);
+    };
+  });
+
+  // Chọn màu sân chơi
+  $('themeGrid').querySelectorAll('.opt-btn').forEach(btn => {
+    btn.onclick = () => {
+      $('themeGrid').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedTheme = Number(btn.dataset.theme);
+      buildLevel(currentLevel);
+      resetPlayer();
+      playTone(720, 0.08, 'triangle', 0.08);
+    };
+  });
+
+  // Chọn cấp độ
+  $('lvlList').querySelectorAll('.lvl-btn').forEach(btn => {
+    btn.onclick = () => {
+      const lvl = Number(btn.dataset.lvl);
+      if (lvl >= PREMIUM_LEVEL && !isPremium) {
+        playTone(300, 0.12, 'square', 0.06);
+        openPremium(false);
+        return;
+      }
+      $('lvlList').querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentLevel = lvl;
+      buildLevel(currentLevel);
+      resetPlayer();
+      playTone(580, 0.08, 'sine', 0.08);
+    };
+  });
+
+  $('startBtn').onclick = () => {
+    $('startPanel').classList.add('hidden');
+    score = 0;
+    startLevel(currentLevel);
+    playTone(700, 0.12, 'triangle', 0.1);
+  };
+
+  $('homeBtn').onclick = () => {
+    playing = false;
+    $('endPanel').classList.add('hidden');
+    $('startPanel').classList.remove('hidden');
+  };
+
+  $('menuBtn').onclick = () => {
+    playing = false;
+    $('endPanel').classList.add('hidden');
+    $('startPanel').classList.remove('hidden');
+  };
+
+  // Premium modal handlers
+  $('laterBtn').onclick = closePremium;
+  $('buyBtn').onclick = async () => {
+    // Plug in your real payment SDK here (Stripe, Google Play Billing, App Store, RevenueCat...).
+    // It must expose: window.HopscotchPay.purchase() -> Promise<boolean>
+    if (window.HopscotchPay && typeof window.HopscotchPay.purchase === 'function') {
+      try {
+        if (await window.HopscotchPay.purchase()) { grantPremium(); return; }
+        showToast('Purchase cancelled');
+      } catch (e) {
+        showToast('Purchase failed, please try again');
+      }
+    } else {
+      $('codeMsg').className = 'code-msg';
+      $('codeMsg').textContent = 'Payments are not connected yet. Enter an unlock code below.';
+    }
+  };
+  const redeem = () => {
+    const code = $('codeInput').value.trim().toUpperCase();
+    if (PREMIUM_CODES.includes(code)) {
+      $('codeMsg').className = 'code-msg ok';
+      $('codeMsg').textContent = 'Code accepted! 🎉';
+      grantPremium();
+    } else {
+      $('codeMsg').className = 'code-msg';
+      $('codeMsg').textContent = 'Invalid code. Please try again.';
+      playTone(220, 0.2, 'sawtooth', 0.06, 120);
+    }
+  };
+  $('redeemBtn').onclick = redeem;
+  $('codeInput').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') redeem(); });
+  $('codeInput').addEventListener('keyup', e => e.stopPropagation());
+
+  // Khởi tạo màn hình nền ban đầu
+  refreshPremiumUI();
+  buildLevel(1);
+  resetPlayer();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
